@@ -134,6 +134,23 @@
 
 
 
+/* ── Stamp border — perforated scalloped edge for the love letter card ── */
+.stamp-border {
+  position: relative;
+  background: var(--color-parchment-dark);
+  padding: 2rem;
+  border: 2px solid var(--color-border-stamp);
+  --stamp-size: 10px;
+  --stamp-bg: var(--color-parchment);
+  background-image:
+    radial-gradient(circle, var(--stamp-bg) var(--stamp-size), transparent 0),
+    radial-gradient(circle, var(--stamp-bg) var(--stamp-size), transparent 0);
+  background-size: calc(var(--stamp-size) * 4) calc(var(--stamp-size) * 4);
+  background-position: calc(var(--stamp-size) * -2) 0, calc(100% + var(--stamp-size) * 2) 0;
+  background-repeat: repeat-y;
+  box-shadow: 0 24px 60px var(--color-shadow);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

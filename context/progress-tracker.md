@@ -15,10 +15,10 @@ Scaffold Next.js project, install dependencies, configure Supabase, set up desig
 | 01 | Project Scaffold + Design System | ✅ Complete | Next.js 15 scaffold, design tokens, Supabase helpers, and placeholder structure added |
 | 02 | Hero Section | ✅ Complete | Full-viewport hero with letter-by-letter name animation, 16 floating hearts, rose texture overlay, and bouncing scroll indicator |
 | 03 | Music Player | ✅ Complete | Fixed bottom player bar with muted autoplay, first-interaction unmute, vinyl spin animation, play/pause + mute controls, graceful missing-file handling |
-| 04 | Love Letter Section | ⬜ Pending | |
-| 05 | Gallery Section | ⬜ Pending | |
-| 06 | Shoutouts Feed | ⬜ Pending | |
-| 07 | Shoutout Upload Form | ⬜ Pending | |
+| 04 | Love Letter Section | ✅ Complete | Parchment letter card with stamp-border CSS, inline SVG postage stamps (heart + envelope), inline SVG postmark with "SEALED WITH LOVE", Dancing Script address/salutation, italic Lato body with placeholder |
+| 05 | Gallery Section | ✅ Complete | Dark burgundy gallery with Photos/Videos tabs, polaroid frames with deterministic rotation + hover reset, video cards with play overlay, Supabase Storage fetch via API route, graceful empty state |
+| 06 | Shoutouts Feed | ✅ Complete | Paginated API route (approved only, 20/page), ShoutoutCard with text/photo/video variants, ShoutoutsSection client component with load-more pagination, empty state, loading spinner |
+| 07 | Shoutout Upload Form | ✅ Complete | POST handler with FormData, file upload to Supabase Storage, client-side validation, three type pills, char counter, dashed upload zone, success animation with floating hearts, error state |
 | 08 | Gift Section + Footer | ⬜ Pending | |
 | 09 | Admin Panel | ⬜ Pending | |
 | 10 | Polish + Deployment | ⬜ Pending | |
