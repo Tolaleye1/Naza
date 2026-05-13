@@ -30,13 +30,6 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# copyrighted audio
-public/audio/song.mp3
-
-# agent/personal files
-AGENT-PROMPTS.md
-context/current-issues.md
-
 # env files (can opt-in for committing if needed)
 .env*
 
@@ -46,3 +39,8 @@ context/current-issues.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# project-specific ignores
+public/audio/song.mp3
+AGENT-PROMPTS.md
+context/current-issues.md
