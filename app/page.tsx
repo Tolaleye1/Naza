@@ -162,9 +162,10 @@ function GallerySection() {
   return (
     <section id="memories">
       <div className="section-inner">
-        <p className="section-eyebrow">our story in pictures</p>
+        <p className="section-eyebrow">captured in time</p>
         <h2 className="section-title">
-          Us, Through <em>the Years</em>
+          Naza, Beautiful<br />
+          <em>Always</em>
         </h2>
         <div className="gallery-grid">
           {[0, 1, 2, 3].map((idx) => {
@@ -217,9 +218,8 @@ function RecentShoutoutsSection() {
   return (
     <section id="recent-shoutouts">
       <div className="section-inner">
-        <p className="section-eyebrow">love from everyone</p>
         <h2 className="section-title">
-          Recent <em>Shoutouts</em>
+          Recent Shoutouts
         </h2>
       </div>
       <div className="recent-grid">
@@ -258,9 +258,24 @@ function RecentShoutoutsSection() {
           );
         })}
       </div>
-      <div className="recent-cta">
-        <Link href="/shoutouts" className="recent-cta-link">
-          See all shoutouts →
+      <div className="recent-cta" style={{ marginTop: "40px" }}>
+        <Link
+          href="/shoutouts"
+          style={{
+            display: "inline-block",
+            fontFamily: "var(--ff-body)",
+            color: "var(--rose-light)",
+            border: "1px solid var(--rose)",
+            borderRadius: "999px",
+            padding: "10px 24px",
+            fontSize: "0.85rem",
+            textDecoration: "none",
+            letterSpacing: "0.05em",
+            transition: "all 0.3s",
+            background: "transparent",
+          }}
+        >
+          View All Shoutouts 💌
         </Link>
       </div>
     </section>
@@ -310,16 +325,19 @@ function FinaleSection() {
 export default function Home() {
   const [mounted, setMounted] = useState(false);
 
-  const initSite = useCallback(() => {
-    if (typeof window !== "undefined" && window.initMainSite) {
-      window.initMainSite();
-    }
-  }, []);
-
   useEffect(() => {
     setMounted(true);
-    initSite();
-  }, [initSite]);
+    // Trigger main-site initialization
+    if (typeof window !== "undefined") {
+      if (window.initMainSite) {
+        window.initMainSite();
+      } else {
+        // Fallback: manually reveal cards if initMainSite hasn't loaded yet
+        const cards = document.querySelectorAll(".reveal-card");
+        cards.forEach((c) => c.classList.add("visible"));
+      }
+    }
+  }, []);
 
   if (!mounted) return null;
 
@@ -330,7 +348,6 @@ export default function Home() {
       <ReasonsSection />
       <GallerySection />
       <RecentShoutoutsSection />
-      <GalaxyShoutoutsSection />
       <FinaleSection />
     </main>
   );
