@@ -1,45 +1,40 @@
-import type { Metadata } from "next";
-import { Dancing_Script, Lato, Playfair_Display } from "next/font/google";
-import "./globals.css";
-import MusicPlayer from "@/components/shared/music-player";
+import { Cormorant_Garamond, Jost } from 'next/font/google';
+import Script from 'next/script';
+import CinematicMusicPlayer from '@/components/shared/cinematic-music-player';
+import Navbar from '@/components/shared/navbar';
+import './globals.css';
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+});
+const jost = Jost({
+  subsets: ['latin'],
+  weight: ['200', '300', '400'],
+  variable: '--font-jost',
 });
 
-const dancing = Dancing_Script({
-  subsets: ["latin"],
-  variable: "--font-dancing",
-  display: "swap",
-});
+// Petit Formal Script loaded via @import in globals.css
 
-const lato = Lato({
-  subsets: ["latin"],
-  weight: ["300", "400", "700"],
-  variable: "--font-lato",
-  display: "swap",
-});
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "Naza's Special Day",
-  description: "A birthday website made with love",
+  description: "A birthday website made with love — for Naza",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${playfair.variable} ${dancing.variable} ${lato.variable} h-full scroll-smooth`}
-    >
-      <body className="min-h-full bg-parchment font-body text-ink antialiased" suppressHydrationWarning>
+    <html lang="en" className={`${cormorant.variable} ${jost.variable} h-full scroll-smooth`}>
+      <body className="min-h-full antialiased">
+        <div id="global-bg-layer" aria-hidden="true" />
+        <div className="cinematic-vignette" aria-hidden="true" />
+        <div id="falling-petals" aria-hidden="true" />
+        <Navbar />
         {children}
-        <MusicPlayer />
+        <CinematicMusicPlayer />
+        <Script src="/js/device-tier-system.js" strategy="beforeInteractive" />
+        <Script src="/js/main-site.js" strategy="lazyOnload" />
       </body>
     </html>
   );
