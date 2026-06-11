@@ -8,6 +8,7 @@ export interface Shoutout {
   text_content?: string;
   media_url?: string;
   youtube_url?: string;
+  profile_picture_url?: string;
   status: ShoutoutStatus;
   created_at: string;
 }
