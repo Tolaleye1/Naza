@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Shoutout } from "@/types/shoutout.types";
 import type { GalleryItem } from "@/types/gallery.types";
-import GalaxyShoutoutsSection from "@/components/sections/galaxy-shoutouts-section";
 
 /* ── Declare global initMainSite ── */
 declare global {

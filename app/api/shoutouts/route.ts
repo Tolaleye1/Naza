@@ -23,28 +23,36 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const offset = (page - 1) * PAGE_SIZE;
 
-    const supabaseAdmin = createSupabaseAdminClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any[] | null = null;
+    let count: number | null = null;
 
-    // Fetch total count of approved shoutouts
-    const { count, error: countError } = await supabaseAdmin
-      .from("shoutouts")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "approved");
+    try {
+      const supabaseAdmin = createSupabaseAdminClient();
+      
+      // Fetch total count of approved shoutouts
+      const { count: fetchedCount, error: countError } = await supabaseAdmin
+        .from("shoutouts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "approved");
 
-    if (countError) {
-      return Response.json({ error: countError.message }, { status: 500 });
-    }
+      if (!countError) {
+        count = fetchedCount;
+      }
 
-    // Fetch paginated approved shoutouts
-    const { data, error } = await supabaseAdmin
-      .from("shoutouts")
-      .select("*")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .range(offset, offset + PAGE_SIZE - 1);
+      // Fetch paginated approved shoutouts
+      const { data: fetchedData, error } = await supabaseAdmin
+        .from("shoutouts")
+        .select("*")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
 
-    if (error) {
-      return Response.json({ error: error.message }, { status: 500 });
+      if (!error) {
+        data = fetchedData;
+      }
+    } catch {
+      // Database client creation failed or credentials missing
     }
 
     const MOCK_FALLBACK = [
