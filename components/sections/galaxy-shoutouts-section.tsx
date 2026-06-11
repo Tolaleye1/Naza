@@ -184,13 +184,15 @@ async function initThree(
 
   // Scene
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000008);
 
   // Camera
-  const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
-  camera.position.set(0, 8, 12);
+  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 150);
+  camera.position.set(0, 14, 34);
+  camera.lookAt(0, 0, 0);
 
   // WebGL renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.domElement.style.position = "absolute";
@@ -216,52 +218,41 @@ async function initThree(
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.maxDistance = 25;
+  controls.maxDistance = 80;
   controls.minDistance = 2;
 
   // Particle System (Galaxy Stars)
-  const particleCount = 2000;
+  const particleCount = 50000;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
 
+  const colorInside = new THREE.Color(0xff6030);
+  const colorOutside = new THREE.Color(0x1b3984);
+
   for (let i = 0; i < particleCount; i++) {
-    const radius = Math.random() * 8 + 0.5;
+    const i3 = i * 3;
+    const radius = Math.random() * 15;
     const spinAngle = radius * 1.2;
-    const armIndex = i % 4;
-    const branchAngle = (armIndex / 4) * Math.PI * 2;
+    const branchAngle = ((i % 4) / 4) * Math.PI * 2;
 
-    const randomX = (Math.random() - 0.5) * 0.3 * (8 - radius) / 8;
-    const randomY = (Math.random() - 0.5) * 0.2 * (8 - radius) / 8;
-    const randomZ = (Math.random() - 0.5) * 0.3 * (8 - radius) / 8;
+    positions[i3] = Math.cos(branchAngle + spinAngle) * radius;
+    positions[i3 + 1] = 0;
+    positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius;
 
-    const x = Math.cos(branchAngle + spinAngle) * radius + randomX;
-    const z = Math.sin(branchAngle + spinAngle) * radius + randomZ;
-    const y = randomY;
+    const mixedColor = colorInside.clone();
+    mixedColor.lerp(colorOutside, radius / 15);
 
-    positions[i * 3] = x;
-    positions[i * 3 + 1] = y;
-    positions[i * 3 + 2] = z;
-
-    // Mixed colors (pink to purple)
-    const mixedColor = new THREE.Color();
-    const colorRatio = Math.random();
-    mixedColor.lerpColors(
-      new THREE.Color("#e8698a"), // Pink
-      new THREE.Color("#7e22ce"), // Purple
-      colorRatio
-    );
-
-    colors[i * 3] = mixedColor.r;
-    colors[i * 3 + 1] = mixedColor.g;
-    colors[i * 3 + 2] = mixedColor.b;
+    colors[i3] = mixedColor.r;
+    colors[i3 + 1] = mixedColor.g;
+    colors[i3 + 2] = mixedColor.b;
   }
 
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
   const material = new THREE.PointsMaterial({
-    size: 0.08,
+    size: 0.01,
     sizeAttenuation: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
@@ -334,8 +325,8 @@ async function initThree(
   let frameId = 0;
   const animate = () => {
     frameId = requestAnimationFrame(animate);
-    galaxy.rotation.y += 0.0008;
-    nodeGroup.rotation.y += 0.0008;
+    galaxy.rotation.y += 0.001;
+    nodeGroup.rotation.y += 0.001;
     controls.update();
     renderer.render(scene, camera);
     css2dRenderer.render(scene, camera);
