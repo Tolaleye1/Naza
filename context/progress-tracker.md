@@ -41,6 +41,7 @@ Scaffold Next.js project, install dependencies, configure Supabase, set up desig
 - 2026-05-13: Started FR-01 project scaffold and design system setup.
 - 2026-05-13: Completed FR-01 verification with `npx tsc --noEmit`, `npm run lint`, `npm run build`, and a successful `npm run dev` boot on port 3001 because port 3000 was already in use locally.
 - 2026-05-13: Reviewed `context/current-issues.md` and aligned FR-06, FR-07, FR-09, and FR-10 with the immediate-publish shoutout flow.
+- 2026-06-11: Fixed the 3D galaxy rendering in components/sections/galaxy-shoutouts-section.tsx, implementing WebGL & CSS2DRenderer overlays, profile pictures in nodes, uniform spiral node placement, and matched particle simulation parameters to the reference site exactly.
 
 ---
 
