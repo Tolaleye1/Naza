@@ -192,7 +192,7 @@ async function initThree(
   camera.lookAt(0, 0, 0);
 
   // WebGL renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.domElement.style.position = "absolute";
@@ -216,32 +216,38 @@ async function initThree(
 
   // Controls
   const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0, 0);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.maxDistance = 80;
-  controls.minDistance = 2;
+  controls.minDistance = 10;
+  controls.maxDistance = 60;
+  controls.maxPolarAngle = 0.75 * Math.PI;
+  controls.update();
 
   // Particle System (Galaxy Stars)
-  const particleCount = 50000;
+  const particleCount = window.innerWidth < 768 ? 25000 : 50000;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
 
-  const colorInside = new THREE.Color(0xff6030);
-  const colorOutside = new THREE.Color(0x1b3984);
+  const colorInside = new THREE.Color(0xff4488);
+  const colorOutside = new THREE.Color(3017290); // 0x2e0a4a
 
   for (let i = 0; i < particleCount; i++) {
     const i3 = i * 3;
-    const radius = Math.random() * 15;
-    const spinAngle = radius * 1.2;
+    const radius = 15 * Math.random();
+    const spinAngle = 1.2 * radius;
     const branchAngle = ((i % 4) / 4) * Math.PI * 2;
 
-    positions[i3] = Math.cos(branchAngle + spinAngle) * radius;
-    positions[i3 + 1] = 0;
-    positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius;
+    const randomVal = Math.pow(Math.random(), 3) * (0.5 > Math.random() ? 1 : -1);
+    const y = randomVal * (1 - radius / 15) * 1.5;
+    const offset = 0.8 * randomVal;
 
-    const mixedColor = colorInside.clone();
-    mixedColor.lerp(colorOutside, radius / 15);
+    positions[i3] = Math.cos(branchAngle + spinAngle) * radius + offset;
+    positions[i3 + 1] = y;
+    positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + offset;
+
+    const mixedColor = colorInside.clone().lerp(colorOutside, radius / 15);
 
     colors[i3] = mixedColor.r;
     colors[i3 + 1] = mixedColor.g;
@@ -252,7 +258,7 @@ async function initThree(
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
   const material = new THREE.PointsMaterial({
-    size: 0.01,
+    size: 0.015,
     sizeAttenuation: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
@@ -293,8 +299,8 @@ async function initThree(
     if (shoutout.profile_picture_url) {
       const img = document.createElement("img");
       img.src = shoutout.profile_picture_url;
-      img.className = "galaxy-node-img";
-      img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%;";
+      img.alt = shoutout.sender_name;
+      img.className = "galaxy-node-pfp";
       initial.appendChild(img);
     } else {
       initial.textContent = shoutout.sender_name[0].toUpperCase();
@@ -309,11 +315,17 @@ async function initThree(
     const typeIcon = document.createElement("span");
     typeIcon.className = "galaxy-node-icon";
     typeIcon.textContent =
-      shoutout.message_type === "photo" ? "📷" : shoutout.message_type === "video" ? "🎥" : "✍️";
+      shoutout.message_type === "text"
+        ? "text"
+        : shoutout.message_type === "photo"
+        ? "photo"
+        : "video";
     nodeDiv.appendChild(typeIcon);
 
     // Click handler
-    nodeDiv.addEventListener("click", () => {
+    nodeDiv.style.pointerEvents = "auto";
+    nodeDiv.addEventListener("click", (e) => {
+      e.stopPropagation();
       onSelect(shoutout);
     });
 
@@ -325,8 +337,8 @@ async function initThree(
   let frameId = 0;
   const animate = () => {
     frameId = requestAnimationFrame(animate);
-    galaxy.rotation.y += 0.001;
-    nodeGroup.rotation.y += 0.001;
+    galaxy.rotation.y += 0.0008;
+    nodeGroup.rotation.y += 0.0008;
     controls.update();
     renderer.render(scene, camera);
     css2dRenderer.render(scene, camera);
