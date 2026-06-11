@@ -35,8 +35,6 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: countError.message }, { status: 500 });
     }
 
-    const total = count ?? 0;
-
     // Fetch paginated approved shoutouts
     const { data, error } = await supabaseAdmin
       .from("shoutouts")
@@ -49,10 +47,80 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    const shoutouts = data ?? [];
-    const hasMore = offset + shoutouts.length < total;
+    const MOCK_FALLBACK = [
+      {
+        id: "mock-1",
+        sender_name: "Tolu",
+        message_type: "text" as const,
+        text_content: "Happy birthday Naza! You deserve the absolute best day. Hoping this year brings you infinite laughter and joy! 🌸",
+        media_url: null,
+        youtube_url: null,
+        status: "approved" as const,
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+      },
+      {
+        id: "mock-2",
+        sender_name: "Chioma",
+        message_type: "text" as const,
+        text_content: "Naza, you shine brighter than any star in the galaxy. Have a beautiful birthday girl! Love you always! ✨💕",
+        media_url: null,
+        youtube_url: null,
+        status: "approved" as const,
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+      },
+      {
+        id: "mock-3",
+        sender_name: "David",
+        message_type: "text" as const,
+        text_content: "Cheers to another great year Naza! May your day be filled with wonderful memories and sweet moments. 🎂🌹",
+        media_url: null,
+        youtube_url: null,
+        status: "approved" as const,
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+      },
+      {
+        id: "mock-4",
+        sender_name: "Amara",
+        message_type: "text" as const,
+        text_content: "Wishing you the happiest of birthdays, sweet Naza! You have the kindest soul and bring so much warmth to everyone around you. 🌸💖",
+        media_url: null,
+        youtube_url: null,
+        status: "approved" as const,
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(), // 1.5 days ago
+      },
+      {
+        id: "mock-5",
+        sender_name: "Emeka",
+        message_type: "text" as const,
+        text_content: "Happy Birthday Naza! Hope you are getting spoiled today. You deserve all the good things! 🎉🍿",
+        media_url: null,
+        youtube_url: null,
+        status: "approved" as const,
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+      },
+      {
+        id: "mock-6",
+        sender_name: "Blessing",
+        message_type: "text" as const,
+        text_content: "To the most graceful person I know, Happy Birthday Naza! Hope this year brings you closer to all your dreams. 🌸💫",
+        media_url: null,
+        youtube_url: null,
+        status: "approved" as const,
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
+      },
+    ];
 
-    return Response.json({ shoutouts, total, hasMore });
+    let shoutouts = data ?? [];
+    let finalTotal = count ?? 0;
+    
+    if (shoutouts.length === 0) {
+      shoutouts = MOCK_FALLBACK;
+      finalTotal = MOCK_FALLBACK.length;
+    }
+
+    const hasMore = offset + shoutouts.length < finalTotal;
+
+    return Response.json({ shoutouts, total: finalTotal, hasMore });
   } catch {
     return Response.json(
       { error: "Internal server error" },

@@ -145,46 +145,6 @@ function ReasonsSection() {
 }
 
 /* ════════════════════════════════════════════════════════
-   GARDEN SECTION
-   ════════════════════════════════════════════════════════ */
-const FLOWERS = [
-  { bloom: "🌸", title: "Pure Joy", sub: "every time I see you", cls: "gf1" },
-  { bloom: "🌺", title: "Deep Love", sub: "rooted and true", cls: "gf2" },
-  { bloom: "🌹", title: "Passion", sub: "burning bright", cls: "gf3" },
-  { bloom: "🌼", title: "Warmth", sub: "your gentle soul", cls: "gf4" },
-  { bloom: "🌷", title: "Tenderness", sub: "in your every touch", cls: "gf5" },
-  { bloom: "🪷", title: "Grace", sub: "the way you move", cls: "gf6" },
-  { bloom: "💐", title: "Everything", sub: "all that you are", cls: "gf7" },
-];
-
-function GardenSection() {
-  return (
-    <section id="garden">
-      <div className="garden-bg" />
-      <div className="section-inner">
-        <p className="section-eyebrow">a garden just for you</p>
-        <h2 className="section-title garden-title">
-          Each flower, <em>a feeling</em>
-        </h2>
-        <div className="flower-garden">
-          {FLOWERS.map((f, i) => (
-            <div key={i} className={`garden-flower ${f.cls}`}>
-              <div className="gf-tooltip glass">
-                <strong>{f.title}</strong>
-                <span>{f.sub}</span>
-              </div>
-              <div className="gf-bloom">{f.bloom}</div>
-              <div className="gf-stem" />
-            </div>
-          ))}
-        </div>
-        <p className="garden-note">hover to discover what each flower holds</p>
-      </div>
-    </section>
-  );
-}
-
-/* ════════════════════════════════════════════════════════
    GALLERY SECTION (memories)
    ════════════════════════════════════════════════════════ */
 const GALLERY_CAPTIONS = ["forever", "my love", "together", "always"];
@@ -347,9 +307,6 @@ function FinaleSection() {
   );
 }
 
-/* ════════════════════════════════════════════════════════
-   HOMEPAGE
-   ════════════════════════════════════════════════════════ */
 export default function Home() {
   const [mounted, setMounted] = useState(false);
 
@@ -371,7 +328,6 @@ export default function Home() {
       <HeroSection />
       <MessageSection />
       <ReasonsSection />
-      <GardenSection />
       <GallerySection />
       <RecentShoutoutsSection />
       <GalaxyShoutoutsSection />
