@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import type { Shoutout } from "@/types/shoutout.types";
 import type { GalleryItem } from "@/types/gallery.types";
+import RecentShoutoutsSection from "@/components/sections/recent-shoutouts-section";
 
 /* ── Declare global initMainSite ── */
 declare global {
@@ -12,17 +11,6 @@ declare global {
   }
 }
 
-/* ── Helper: format date ── */
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
 
 /* ════════════════════════════════════════════════════════
    HERO SECTION
@@ -197,89 +185,7 @@ function GallerySection() {
   );
 }
 
-/* ════════════════════════════════════════════════════════
-   RECENT SHOUTOUTS SECTION
-   ════════════════════════════════════════════════════════ */
-function RecentShoutoutsSection() {
-  const [shoutouts, setShoutouts] = useState<Shoutout[]>([]);
 
-  useEffect(() => {
-    fetch("/api/shoutouts?page=1")
-      .then((r) => r.json())
-      .then((data: { shoutouts: Shoutout[] }) =>
-        setShoutouts(data.shoutouts?.slice(0, 3) || [])
-      )
-      .catch(() => setShoutouts([]));
-  }, []);
-
-  if (shoutouts.length === 0) return null;
-
-  return (
-    <section id="recent-shoutouts">
-      <div className="section-inner">
-        <h2 className="section-title">
-          Recent Shoutouts
-        </h2>
-      </div>
-      <div className="recent-grid">
-        {shoutouts.map((s, i) => {
-          const initial = s.sender_name.charAt(0).toUpperCase();
-          return (
-            <div key={s.id || i} className="glass" style={{ padding: "24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                <div className="galaxy-node-initial" style={{ width: 40, height: 40, fontSize: "1rem" }}>
-                  {initial}
-                </div>
-                <div>
-                  <p style={{ fontFamily: "var(--ff-display)", color: "var(--text-light)", fontSize: "1.1rem", fontWeight: 400 }}>
-                    {s.sender_name}
-                  </p>
-                  {s.created_at && (
-                    <p style={{ fontFamily: "var(--ff-body)", color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                      {formatDate(s.created_at)}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {s.text_content && (
-                <p className="line-clamp-3" style={{
-                  fontFamily: "var(--ff-body)",
-                  color: "var(--text-light)",
-                  fontWeight: 300,
-                  fontStyle: "italic",
-                  lineHeight: 1.7,
-                  fontSize: "0.95rem",
-                }}>
-                  &ldquo;{s.text_content}&rdquo;
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="recent-cta" style={{ marginTop: "40px" }}>
-        <Link
-          href="/shoutouts"
-          style={{
-            display: "inline-block",
-            fontFamily: "var(--ff-body)",
-            color: "var(--rose-light)",
-            border: "1px solid var(--rose)",
-            borderRadius: "999px",
-            padding: "10px 24px",
-            fontSize: "0.85rem",
-            textDecoration: "none",
-            letterSpacing: "0.05em",
-            transition: "all 0.3s",
-            background: "transparent",
-          }}
-        >
-          View All Shoutouts 💌
-        </Link>
-      </div>
-    </section>
-  );
-}
 
 /* ════════════════════════════════════════════════════════
    FINALE SECTION + FOOTER

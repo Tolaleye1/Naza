@@ -2,173 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Shoutout } from "@/types/shoutout.types";
-import Image from "next/image";
 import * as THREE from "three";
+import ShoutoutModal from "@/components/shared/shoutout-modal";
+import ShoutoutCard from "@/components/shared/shoutout-card";
 
 interface ShoutoutsResponse {
   shoutouts: Shoutout[];
   total: number;
   hasMore: boolean;
-}
-
-/* ── Modal for viewing a single shoutout ── */
-function ShoutoutModal({
-  shoutout,
-  onClose,
-}: {
-  shoutout: Shoutout;
-  onClose: () => void;
-}) {
-  const initial = shoutout.sender_name.charAt(0).toUpperCase();
-  const isYouTube = !shoutout.media_url && !!shoutout.youtube_url;
-
-  return (
-    <div className="shoutout-modal-overlay" onClick={onClose}>
-      <div
-        className="shoutout-modal-card glass"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="modal-close" onClick={onClose}>
-          ✕
-        </button>
-
-        {shoutout.profile_picture_url ? (
-          <div className="modal-avatar">
-            <Image
-              src={shoutout.profile_picture_url}
-              alt={shoutout.sender_name}
-              width={72}
-              height={72}
-              className="modal-avatar-img"
-            />
-          </div>
-        ) : (
-          <div className="modal-avatar">{initial}</div>
-        )}
-
-        <h3 className="modal-sender">{shoutout.sender_name}</h3>
-        {shoutout.created_at && (
-          <p className="modal-timestamp">
-            {new Date(shoutout.created_at).toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
-          </p>
-        )}
-
-        {shoutout.text_content && (
-          <p className="modal-message">&ldquo;{shoutout.text_content}&rdquo;</p>
-        )}
-
-        {shoutout.media_url && shoutout.message_type === "photo" && (
-          <Image
-            src={shoutout.media_url}
-            alt={`From ${shoutout.sender_name}`}
-            width={480}
-            height={360}
-            className="modal-media-img"
-          />
-        )}
-
-        {shoutout.media_url && shoutout.message_type === "video" && (
-          <video
-            src={shoutout.media_url}
-            controls
-            playsInline
-            className="modal-media-video"
-          />
-        )}
-
-        {isYouTube && shoutout.youtube_url && (
-          <div className="modal-youtube-wrap">
-            <iframe
-              className="modal-youtube"
-              src={shoutout.youtube_url.replace("watch?v=", "embed/")}
-              title={`Video from ${shoutout.sender_name}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
-
-        <div className="modal-flower">🌸</div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Shoutout card for normal grid view ── */
-function ShoutoutGridCard({
-  shoutout,
-  onClick,
-}: {
-  shoutout: Shoutout;
-  onClick: () => void;
-}) {
-  const initial = shoutout.sender_name.charAt(0).toUpperCase();
-
-  return (
-    <div className="glass" style={{ padding: "24px", cursor: "pointer" }} onClick={onClick}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-        {shoutout.profile_picture_url ? (
-          <Image
-            src={shoutout.profile_picture_url}
-            alt={shoutout.sender_name}
-            width={40}
-            height={40}
-            style={{ borderRadius: "50%", objectFit: "cover" }}
-          />
-        ) : (
-          <div
-            className="galaxy-node-initial"
-            style={{ width: 40, height: 40, fontSize: "1rem" }}
-          >
-            {initial}
-          </div>
-        )}
-        <div>
-          <p style={{ fontFamily: "var(--ff-display)", color: "var(--text-light)", fontSize: "1.1rem", fontWeight: 400 }}>
-            {shoutout.sender_name}
-          </p>
-          {shoutout.created_at && (
-            <p style={{ fontFamily: "var(--ff-body)", color: "var(--text-muted)", fontSize: "0.75rem" }}>
-              {new Date(shoutout.created_at).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "short",
-              })}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {shoutout.text_content && (
-        <p
-          className="line-clamp-3"
-          style={{
-            fontFamily: "var(--ff-body)",
-            color: "var(--text-light)",
-            fontWeight: 300,
-            fontStyle: "italic",
-            lineHeight: 1.7,
-            fontSize: "0.95rem",
-          }}
-        >
-          &ldquo;{shoutout.text_content}&rdquo;
-        </p>
-      )}
-
-      {shoutout.media_url && shoutout.message_type === "photo" && (
-        <Image
-          src={shoutout.media_url}
-          alt={`From ${shoutout.sender_name}`}
-          width={400}
-          height={220}
-          style={{ borderRadius: 12, width: "100%", height: "auto", marginTop: 8, objectFit: "cover" }}
-        />
-      )}
-    </div>
-  );
 }
 
 /* ── Galaxy View (interactive canvas-like with positioned nodes) ── */
@@ -536,7 +377,7 @@ export default function GalaxyShoutoutsSection() {
               <>
                 <div className="shoutouts-grid-cards">
                   {shoutouts.map((s, i) => (
-                    <ShoutoutGridCard
+                    <ShoutoutCard
                       key={s.id || i}
                       shoutout={s}
                       onClick={() => setSelected(s)}

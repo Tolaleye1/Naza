@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { Shoutout } from "@/types/shoutout.types";
 import ShoutoutCard from "@/components/shared/shoutout-card";
+import ShoutoutModal from "@/components/shared/shoutout-modal";
 
 interface ShoutoutsResponse {
   shoutouts: Shoutout[];
@@ -17,6 +18,7 @@ export default function ShoutoutsSection() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [activeShoutout, setActiveShoutout] = useState<Shoutout | null>(null);
 
   const fetchShoutouts = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -62,7 +64,7 @@ export default function ShoutoutsSection() {
         <p className="mt-3 text-center font-script text-lead text-ink">
           Everyone who loves you, sending their love
         </p>
-
+ 
         {/* Loading state for initial load */}
         {initialLoad && (
           <div className="mt-12 flex items-center justify-center">
@@ -89,7 +91,11 @@ export default function ShoutoutsSection() {
         {shoutouts.length > 0 && (
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {shoutouts.map((shoutout) => (
-              <ShoutoutCard key={shoutout.id} shoutout={shoutout} />
+              <ShoutoutCard
+                key={shoutout.id}
+                shoutout={shoutout}
+                onClick={() => setActiveShoutout(shoutout)}
+              />
             ))}
           </div>
         )}
@@ -114,6 +120,13 @@ export default function ShoutoutsSection() {
           </div>
         )}
       </div>
+
+      {activeShoutout && (
+        <ShoutoutModal
+          shoutout={activeShoutout}
+          onClose={() => setActiveShoutout(null)}
+        />
+      )}
     </section>
   );
 }
