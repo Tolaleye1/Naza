@@ -25,8 +25,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${jost.variable} h-full scroll-smooth`}>
-      <body className="min-h-full antialiased">
+    <html
+      lang="en"
+      className={`${cormorant.variable} ${jost.variable} h-full scroll-smooth`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full antialiased" suppressHydrationWarning>
         <div id="global-bg-layer" aria-hidden="true" />
         <div className="cinematic-vignette" aria-hidden="true" />
         <div id="falling-petals" aria-hidden="true" />

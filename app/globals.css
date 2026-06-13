@@ -582,6 +582,7 @@
   justify-content: center;
   gap: 8px;
   margin-top: 16px;
+  margin-bottom: 28px;
   flex-wrap: wrap;
 }
 
