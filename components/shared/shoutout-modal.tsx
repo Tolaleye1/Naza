@@ -23,16 +23,16 @@ const Ornament = () => (
     <path
       d="M4 44 Q4 4 44 4"
       stroke="currentColor"
-      stroke-width="1.5"
+      strokeWidth="1.5"
       fill="none"
-      stroke-linecap="round"
+      strokeLinecap="round"
     />
     <path
       d="M4 44 Q24 44 24 24"
       stroke="currentColor"
-      stroke-width="1"
+      strokeWidth="1"
       fill="none"
-      stroke-linecap="round"
+      strokeLinecap="round"
     />
   </svg>
 );

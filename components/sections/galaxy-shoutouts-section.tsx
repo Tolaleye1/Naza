@@ -300,6 +300,12 @@ export default function GalaxyShoutoutsSection() {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Shoutout | null>(null);
+  const [typeFilter, setTypeFilter] = useState<'all'|'text'|'photo'|'video'>('all');
+
+  // Reset filter when switching view modes
+  useEffect(() => {
+    setTypeFilter('all');
+  }, [view]);
 
   const fetchShoutouts = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -358,46 +364,72 @@ export default function GalaxyShoutoutsSection() {
           </button>
         </div>
 
+        {view === "normal" && (
+          <div className="type-filter-row">
+            {(["all", "text", "photo", "video"] as const).map((type) => (
+              <button
+                key={type}
+                className={`type-filter-btn ${typeFilter === type ? "active" : ""}`}
+                onClick={() => setTypeFilter(type)}
+              >
+                {type === "all" ? "All" : type === "text" ? "Text" : type === "photo" ? "Photos" : "Videos"}
+              </button>
+            ))}
+          </div>
+        )}
+
         {view === "galaxy" ? (
           <GalaxyView shoutouts={shoutouts} onSelect={setSelected} viewMode={view} />
         ) : (
-          <div className="shoutouts-normal-wrap">
-            {loading && shoutouts.length === 0 ? (
-              <div className="shoutouts-grid-skeleton">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="skeleton-card glass" />
-                ))}
-              </div>
-            ) : shoutouts.length === 0 ? (
-              <div className="shoutouts-grid-empty">
-                <div className="shoutouts-grid-empty-icon">💌</div>
-                <p>No shoutouts yet — be the first!</p>
-              </div>
-            ) : (
-              <>
-                <div className="shoutouts-grid-cards">
-                  {shoutouts.map((s, i) => (
-                    <ShoutoutCard
-                      key={s.id || i}
-                      shoutout={s}
-                      onClick={() => setSelected(s)}
-                    />
-                  ))}
-                </div>
-                {hasMore && (
-                  <div className="shoutouts-grid-loadmore">
-                    <button
-                      className="shoutouts-grid-loadmore-btn"
-                      onClick={handleLoadMore}
-                      disabled={loading}
-                    >
-                      {loading ? "Loading..." : "Load more"}
-                    </button>
+          (() => {
+            const filtered = typeFilter && typeFilter !== 'all'
+              ? shoutouts.filter(s => s.message_type === typeFilter)
+              : shoutouts;
+            return (
+              <div className="shoutouts-normal-wrap">
+                {loading && shoutouts.length === 0 ? (
+                  <div className="shoutouts-grid-skeleton">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="skeleton-card glass" />
+                    ))}
                   </div>
+                ) : shoutouts.length === 0 ? (
+                  <div className="shoutouts-grid-empty">
+                    <div className="shoutouts-grid-empty-icon">💌</div>
+                    <p>No shoutouts yet — be the first!</p>
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="shoutouts-grid-empty">
+                    <div className="shoutouts-grid-empty-icon">💌</div>
+                    <p>No {typeFilter} shoutouts yet</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="shoutouts-grid-cards">
+                      {filtered.map((s, i) => (
+                        <ShoutoutCard
+                          key={s.id || i}
+                          shoutout={s}
+                          onClick={() => setSelected(s)}
+                        />
+                      ))}
+                    </div>
+                    {hasMore && (
+                      <div className="shoutouts-grid-loadmore">
+                        <button
+                          className="shoutouts-grid-loadmore-btn"
+                          onClick={handleLoadMore}
+                          disabled={loading}
+                        >
+                          {loading ? "Loading..." : "Load more"}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </div>
+              </div>
+            );
+          })()
         )}
       </section>
 

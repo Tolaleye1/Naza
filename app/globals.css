@@ -43,7 +43,7 @@
 
 .navbar-logo-icon{font-size:1.4rem}
 
-.navbar-logo-text{font-family:var(--ff-script);color:var(--rose);letter-spacing:.03em;font-size:1.5rem}
+.navbar-logo-text{font-family:var(--ff-script);color:var(--rose);letter-spacing:.03em;font-size:1.4rem}
 
 .navbar-link,.navbar-links{align-items:center;gap:6px;display:flex}
 
@@ -577,6 +577,37 @@
 
 .view-toggle-btn.active{color:var(--rose-light);background:#e8698a2e;border-color:#e8698a99}
 
+.type-filter-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.type-filter-btn {
+  font-family: var(--ff-body);
+  font-size: 0.8rem;
+  font-weight: 300;
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 105, 138, 0.2);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.03em;
+}
+.type-filter-btn:hover {
+  border-color: rgba(232, 105, 138, 0.45);
+  color: var(--text-light);
+}
+.type-filter-btn.active {
+  background: rgba(232, 105, 138, 0.15);
+  border-color: rgba(232, 105, 138, 0.55);
+  color: var(--rose-light);
+}
+
 .shoutouts-normal-wrap{max-width:1100px;margin:0 auto;padding:0 20px}
 
 .shoutouts-grid-cards{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;display:grid}
@@ -713,6 +744,7 @@
   font-size: 1.1rem;
   color: #8B1A1A;
   margin-bottom: 10px;
+  font-style: italic;
 }
 
 .envelope-divider {
@@ -730,6 +762,12 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.envelope-inner {
+  overflow: hidden;
+  border-radius: 0 0 16px 16px;
+  background: #ffffff;
 }
 
 /* === LETTER MODAL === */
