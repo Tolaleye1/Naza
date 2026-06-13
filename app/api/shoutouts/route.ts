@@ -54,10 +54,6 @@ export async function GET(request: NextRequest) {
       }
     } catch (e) {
       console.error("shoutouts route DB error", e);
-      return Response.json(
-        { error: "Database unavailable" },
-        { status: 500 }
-      );
     }
 
     const MOCK_FALLBACK = [
@@ -124,10 +120,8 @@ export async function GET(request: NextRequest) {
     ];
 
     if (data === null || data === undefined) {
-      return Response.json(
-        { error: "Database unavailable" },
-        { status: 500 }
-      );
+      data = [];
+      count = 0;
     }
 
     let shoutouts = data;
