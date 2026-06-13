@@ -18,14 +18,6 @@ window.initMainSite = function() {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.15 });
   document.querySelectorAll('.reveal-card').forEach(el => observer.observe(el));
-
-  // Navbar scroll effect
-  const navbar = document.querySelector('.navbar-root');
-  if (navbar) {
-    window.addEventListener('scroll', () => {
-      navbar.classList.toggle('navbar-scrolled', window.scrollY > 20);
-    });
-  }
 };
 
 if (document.readyState === 'loading') {

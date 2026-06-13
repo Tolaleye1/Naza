@@ -8,17 +8,19 @@
 window.DeviceTier = (function() {
 
   function detect() {
-    var ua      = navigator.userAgent;
+    var ua      = typeof navigator !== 'undefined' && typeof navigator.userAgent === 'string' ? navigator.userAgent : '';
     var mobile  = /Mobi|Android|iPhone|iPad/i.test(ua);
-    var cores   = navigator.hardwareConcurrency || 2;
-    var mem     = navigator.deviceMemory || 4;
-    var touch   = navigator.maxTouchPoints > 1;
+    var cores   = typeof navigator !== 'undefined' && typeof navigator.hardwareConcurrency === 'number' ? navigator.hardwareConcurrency : 2;
+    var mem     = typeof navigator !== 'undefined' && typeof navigator.deviceMemory === 'number' ? navigator.deviceMemory : 4;
+    var touch   = typeof navigator !== 'undefined' && typeof navigator.maxTouchPoints === 'number' ? navigator.maxTouchPoints > 1 : false;
 
-    var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var prefersReducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
 
     if (prefersReducedMotion) return 'low';
     if (mobile || cores <= 2 || mem <= 2) return 'low';
-    if (touch  || cores <= 4 || mem <= 4) return 'mid';
+    if (touch && cores <= 4 && mem <= 4) return 'mid';
     return 'high';
   }
 

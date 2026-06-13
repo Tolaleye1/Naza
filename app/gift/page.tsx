@@ -2,91 +2,150 @@
 
 import { useState } from "react";
 
+function isConfigurationPlaceholder(value: string): boolean {
+  const trimmed = value.trim();
+  return !trimmed || (trimmed.startsWith("[") && trimmed.endsWith("]"));
+}
+
 const GIFT_DETAILS = [
-  { label: "Bank", value: "[BANK_NAME]" },
-  { label: "Account", value: "[ACCOUNT_NUMBER]" },
-  { label: "Name", value: "[ACCOUNT_NAME]" },
+  { label: "Bank", value: process.env.NEXT_PUBLIC_BANK_NAME ?? "" },
+  { label: "Account", value: process.env.NEXT_PUBLIC_ACCOUNT_NUMBER ?? "" },
+  { label: "Name", value: process.env.NEXT_PUBLIC_ACCOUNT_NAME ?? "" },
 ];
 
 function CopyRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
+
+  function clearCopyStatus() {
+    window.setTimeout(() => {
+      setCopyStatus("idle");
+    }, 2000);
+  }
 
   async function handleCopy() {
+    if (isConfigurationPlaceholder(value)) {
+      console.error("gift page config incomplete", { label, value });
+      setCopyStatus("error");
+      setCopied(false);
+      clearCopyStatus();
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
+      setCopyStatus("success");
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
+      clearCopyStatus();
+    } catch (err) {
+      console.error("gift copy failed", err);
+
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "true");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      const copiedWithFallback = document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      if (copiedWithFallback) {
+        setCopied(true);
+        setCopyStatus("success");
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        setCopied(false);
+        setCopyStatus("error");
+      }
+
+      clearCopyStatus();
     }
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        background: "rgba(0,0,0,0.3)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 12,
-        padding: "14px 20px",
-      }}
-    >
-      <span
+    <div>
+      <div
         style={{
-          fontFamily: "var(--ff-body)",
-          fontSize: "0.8rem",
-          color: "var(--text-muted)",
-          flexShrink: 0,
-          minWidth: 56,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          background: "rgba(0,0,0,0.3)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12,
+          padding: "14px 20px",
         }}
       >
-        {label}
-      </span>
-      <span
-        style={{
-          fontFamily: "var(--ff-body)",
-          fontSize: "0.95rem",
-          fontWeight: 300,
-          color: "var(--gold)",
-          flex: 1,
-          textAlign: "center",
-        }}
-      >
-        {value}
-      </span>
-      <button
-        type="button"
-        aria-label={`Copy ${label}`}
-        onClick={handleCopy}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: 4,
-          flexShrink: 0,
-          color: copied ? "var(--rose-light)" : "var(--text-muted)",
-          transition: "color 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "var(--rose-light)";
-        }}
-        onMouseLeave={(e) => {
-          if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
-        }}
-      >
-        {copied ? (
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        ) : (
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <rect x="9" y="9" width="13" height="13" rx="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-        )}
-      </button>
+        <span
+          style={{
+            fontFamily: "var(--ff-body)",
+            fontSize: "0.8rem",
+            color: "var(--text-muted)",
+            flexShrink: 0,
+            minWidth: 56,
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--ff-body)",
+            fontSize: "0.95rem",
+            fontWeight: 300,
+            color: "var(--gold)",
+            flex: 1,
+            textAlign: "center",
+          }}
+        >
+          {isConfigurationPlaceholder(value) ? "Configuration incomplete" : value}
+        </span>
+        <button
+          type="button"
+          aria-label={`Copy ${label}`}
+          onClick={handleCopy}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            flexShrink: 0,
+            color: copied ? "var(--rose-light)" : "var(--text-muted)",
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "var(--rose-light)";
+          }}
+          onMouseLeave={(e) => {
+            if (!copied) (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
+          }}
+        >
+          {copied ? (
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+        </button>
+      </div>
+      {copyStatus === "error" && (
+        <p
+          aria-live="polite"
+          style={{
+            marginTop: 8,
+            fontSize: "0.8rem",
+            color: "var(--rose-light)",
+          }}
+        >
+          {isConfigurationPlaceholder(value) ? "Configuration incomplete" : "Copy failed"}
+        </p>
+      )}
     </div>
   );
 }

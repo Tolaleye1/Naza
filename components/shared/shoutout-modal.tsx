@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { Shoutout } from "@/types/shoutout.types";
+import { getYouTubeEmbedSrc } from "@/lib/youtube";
 
 interface ShoutoutModalProps {
   shoutout: Shoutout;
@@ -39,6 +40,7 @@ const Ornament = () => (
 
 export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps) {
   const isYouTube = !shoutout.media_url && !!shoutout.youtube_url;
+  const youtubeEmbedSrc = shoutout.youtube_url ? getYouTubeEmbedSrc(shoutout.youtube_url) : "";
   const formattedDate = formatFullDate(shoutout.created_at);
 
   return (
@@ -107,10 +109,10 @@ export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps)
           />
         )}
 
-        {isYouTube && shoutout.youtube_url && (
+        {isYouTube && youtubeEmbedSrc && (
           <div className="letter-youtube-wrap">
             <iframe
-              src={shoutout.youtube_url.replace("watch?v=", "embed/")}
+              src={youtubeEmbedSrc}
               title={`Video from ${shoutout.sender_name}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

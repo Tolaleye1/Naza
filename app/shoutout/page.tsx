@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { MessageType } from "@/types/shoutout.types";
+import { isValidYouTubeUrl } from "@/lib/youtube";
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
@@ -13,7 +14,9 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+const MAX_PROFILE_SIZE = 2 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 500;
+const ALLOWED_PROFILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -27,7 +30,7 @@ export default function ShoutoutPage() {
   const [textContent, setTextContent] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<File | null>(null);
-  const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | undefined>(undefined);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -48,12 +51,31 @@ export default function ShoutoutPage() {
 
   function handleProfileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
-    if (file) {
-      setProfilePic(file);
-      const reader = new FileReader();
-      reader.onload = () => setProfilePreview(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) {
+      setProfilePic(null);
+      setProfilePreview(undefined);
+      return;
     }
+
+    if (!ALLOWED_PROFILE_TYPES.includes(file.type)) {
+      setErrorMsg("Only JPG, PNG, and WebP images are allowed.");
+      setProfilePic(null);
+      setProfilePreview(undefined);
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_SIZE) {
+      setErrorMsg("Profile picture must be under 2MB.");
+      setProfilePic(null);
+      setProfilePreview(undefined);
+      return;
+    }
+
+    setErrorMsg("");
+    setProfilePic(file);
+    const reader = new FileReader();
+    reader.onload = () => setProfilePreview(reader.result as string);
+    reader.readAsDataURL(file);
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -98,7 +120,7 @@ export default function ShoutoutPage() {
     setTextContent("");
     setMediaFile(null);
     setProfilePic(null);
-    setProfilePreview(null);
+    setProfilePreview(undefined);
     setYoutubeUrl("");
     setMessageType("text");
     setStatus("idle");
@@ -125,6 +147,10 @@ export default function ShoutoutPage() {
     }
     if (messageType === "video" && !mediaFile && !youtubeUrl.trim()) {
       setErrorMsg("Please select a video or paste a YouTube link.");
+      return;
+    }
+    if (messageType === "video" && youtubeUrl.trim() && !isValidYouTubeUrl(youtubeUrl.trim())) {
+      setErrorMsg("Please enter a valid YouTube URL.");
       return;
     }
 

@@ -14,26 +14,24 @@ const NAV_LINKS = [
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Close mobile nav on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Navbar scroll effect
   useEffect(() => {
     function handleScroll() {
-      const nav = document.querySelector(".navbar-root");
-      if (nav) {
-        nav.classList.toggle("navbar-scrolled", window.scrollY > 20);
-      }
+      setIsScrolled(window.scrollY > 20);
     }
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <nav className="navbar-root" aria-label="Main navigation">
+    <nav className={`navbar-root ${isScrolled ? "navbar-scrolled" : ""}`} aria-label="Main navigation">
       <div className="navbar-inner">
         <Link className="navbar-logo" href="/">
           <span className="navbar-logo-icon">🌸</span>

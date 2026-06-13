@@ -1,12 +1,22 @@
 "use client";
 
 import Image from "next/image";
+import type { KeyboardEvent } from "react";
 import type { Shoutout } from "@/types/shoutout.types";
+import { getYouTubeEmbedSrc } from "@/lib/youtube";
 
 interface ShoutoutCardProps {
   shoutout: Shoutout;
   onClick?: () => void;
   onToggle?: () => void;
+}
+
+function handleKeyboardActivation(event: KeyboardEvent<HTMLDivElement>, onClick?: () => void) {
+  if (!onClick) return;
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    onClick();
+  }
 }
 
 /** Format a timestamp into a readable relative or short date string */
@@ -31,7 +41,14 @@ function formatDate(dateStr: string): string {
 function TextCard({ shoutout, onClick }: ShoutoutCardProps) {
   const previewText = shoutout.text_content || "";
   return (
-    <div className="envelope-card" onClick={onClick}>
+    <div
+      className="envelope-card"
+      onClick={onClick}
+      onKeyDown={(event) => handleKeyboardActivation(event, onClick)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open shoutout from ${shoutout.sender_name}`}
+    >
       <div className="envelope-flap">
         <span className="flap-heart">♥</span>
       </div>
@@ -49,17 +66,30 @@ function TextCard({ shoutout, onClick }: ShoutoutCardProps) {
 /* ─── Photo Shoutout Card (White card, full image layout) ─── */
 function PhotoCard({ shoutout, onClick }: ShoutoutCardProps) {
   return (
-    <div className="envelope-card" onClick={onClick}>
+    <div
+      className="envelope-card"
+      onClick={onClick}
+      onKeyDown={(event) => handleKeyboardActivation(event, onClick)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open photo shoutout from ${shoutout.sender_name}`}
+    >
       <div className="envelope-inner overflow-hidden">
         <div className="relative aspect-[4/3] w-full h-full">
-          <Image
-            src={shoutout.media_url || ""}
-            alt={`Shoutout from ${shoutout.sender_name}`}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-            loading="lazy"
-          />
+          {shoutout.media_url ? (
+            <Image
+              src={shoutout.media_url}
+              alt={`Shoutout from ${shoutout.sender_name}`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-black/30 text-sm text-[rgba(200,150,170,0.85)]">
+              No image available
+            </div>
+          )}
 
           {/* Gradient overlay at bottom */}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-12">
@@ -82,15 +112,23 @@ function PhotoCard({ shoutout, onClick }: ShoutoutCardProps) {
 function VideoCardSmall({ shoutout, onClick }: ShoutoutCardProps) {
   const videoSrc = shoutout.media_url || "";
   const isYouTube = !shoutout.media_url && !!shoutout.youtube_url;
+  const youtubeEmbedSrc = shoutout.youtube_url ? getYouTubeEmbedSrc(shoutout.youtube_url) : "";
 
   return (
-    <div className="envelope-card" onClick={onClick}>
+    <div
+      className="envelope-card"
+      onClick={onClick}
+      onKeyDown={(event) => handleKeyboardActivation(event, onClick)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open video shoutout from ${shoutout.sender_name}`}
+    >
       <div className="envelope-inner overflow-hidden">
-        {isYouTube ? (
+        {isYouTube && youtubeEmbedSrc ? (
           /* YouTube placeholder/embed on card with pointer-events disabled */
           <div className="relative aspect-video pointer-events-none">
             <iframe
-              src={shoutout.youtube_url?.replace("watch?v=", "embed/") || ""}
+              src={youtubeEmbedSrc}
               title={`Video shoutout from ${shoutout.sender_name}`}
               className="h-full w-full"
             />

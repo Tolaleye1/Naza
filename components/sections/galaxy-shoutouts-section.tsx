@@ -12,13 +12,25 @@ interface ShoutoutsResponse {
   hasMore: boolean;
 }
 
+type ShoutoutWithKey = Shoutout & { stableKey: string };
+
+function getStableShoutoutKey(shoutout: Shoutout) {
+  return [
+    shoutout.id || "",
+    shoutout.created_at,
+    shoutout.sender_name,
+    shoutout.message_type,
+    shoutout.media_url || shoutout.youtube_url || shoutout.text_content || "",
+  ].join("|");
+}
+
 /* ── Galaxy View (interactive canvas-like with positioned nodes) ── */
 async function initThree(
   mount: HTMLDivElement,
   width: number,
   height: number,
-  shoutouts: Shoutout[],
-  onSelect: (s: Shoutout) => void
+  shoutouts: ShoutoutWithKey[],
+  onSelect: (s: ShoutoutWithKey) => void
 ) {
   const { CSS2DRenderer, CSS2DObject } = await import("three/examples/jsm/renderers/CSS2DRenderer.js");
   const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js");
@@ -66,7 +78,7 @@ async function initThree(
   controls.update();
 
   // Particle System (Galaxy Stars)
-  const particleCount = window.innerWidth < 768 ? 25000 : 50000;
+  const particleCount = typeof width === "number" && width < 768 ? 25000 : 50000;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
@@ -214,8 +226,8 @@ function GalaxyView({
   onSelect,
   viewMode,
 }: {
-  shoutouts: Shoutout[];
-  onSelect: (s: Shoutout) => void;
+  shoutouts: ShoutoutWithKey[];
+  onSelect: (s: ShoutoutWithKey) => void;
   viewMode: "galaxy" | "normal";
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -295,11 +307,11 @@ function GalaxyView({
 /* ── Main Component ── */
 export default function GalaxyShoutoutsSection() {
   const [view, setView] = useState<"galaxy" | "normal">("galaxy");
-  const [shoutouts, setShoutouts] = useState<Shoutout[]>([]);
+  const [shoutouts, setShoutouts] = useState<ShoutoutWithKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Shoutout | null>(null);
+  const [selected, setSelected] = useState<ShoutoutWithKey | null>(null);
   const [typeFilter, setTypeFilter] = useState<'all'|'text'|'photo'|'video'>('all');
 
   // Reset filter when switching view modes
@@ -313,8 +325,12 @@ export default function GalaxyShoutoutsSection() {
       const res = await fetch(`/api/shoutouts?page=${pageNum}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data: ShoutoutsResponse = await res.json();
+      const normalized = data.shoutouts.map((shoutout) => ({
+        ...shoutout,
+        stableKey: getStableShoutoutKey(shoutout),
+      }));
       setShoutouts((prev) =>
-        pageNum === 1 ? data.shoutouts : [...prev, ...data.shoutouts]
+        pageNum === 1 ? normalized : [...prev, ...normalized]
       );
       setHasMore(data.hasMore);
     } catch {
@@ -406,9 +422,9 @@ export default function GalaxyShoutoutsSection() {
                 ) : (
                   <>
                     <div className="shoutouts-grid-cards">
-                      {filtered.map((s, i) => (
+                      {filtered.map((s) => (
                         <ShoutoutCard
-                          key={s.id || i}
+                          key={s.id || s.stableKey}
                           shoutout={s}
                           onClick={() => setSelected(s)}
                         />

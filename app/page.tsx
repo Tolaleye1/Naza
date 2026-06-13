@@ -1,13 +1,25 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import type { GalleryItem } from "@/types/gallery.types";
 import RecentShoutoutsSection from "@/components/sections/recent-shoutouts-section";
+import MainSiteInit from "@/components/shared/main-site-init";
 
 /* ── Declare global initMainSite ── */
-declare global {
-  interface Window {
-    initMainSite?: () => void;
+async function getGalleryPhotos(): Promise<GalleryItem[]> {
+  try {
+    const endpoint = process.env.NEXT_PUBLIC_URL
+      ? `${process.env.NEXT_PUBLIC_URL}/api/gallery`
+      : "/api/gallery";
+    const res = await fetch(endpoint, {
+      next: { revalidate: 3600 },
+    });
+
+    if (!res.ok) {
+      return [];
+    }
+
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
   }
 }
 
@@ -136,16 +148,7 @@ function ReasonsSection() {
    ════════════════════════════════════════════════════════ */
 const GALLERY_CAPTIONS = ["forever", "my love", "together", "always"];
 
-function GallerySection() {
-  const [photos, setPhotos] = useState<GalleryItem[]>([]);
-
-  useEffect(() => {
-    fetch("/api/gallery")
-      .then((r) => r.json())
-      .then((data: GalleryItem[]) => setPhotos(data))
-      .catch(() => setPhotos([]));
-  }, []);
-
+function GallerySection({ photos }: { photos: GalleryItem[] }) {
   return (
     <section id="memories">
       <div className="section-inner">
@@ -227,33 +230,18 @@ function FinaleSection() {
   );
 }
 
-export default function Home() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    // Trigger main-site initialization
-    if (typeof window !== "undefined") {
-      if (window.initMainSite) {
-        window.initMainSite();
-      } else {
-        // Fallback: manually reveal cards if initMainSite hasn't loaded yet
-        const cards = document.querySelectorAll(".reveal-card");
-        cards.forEach((c) => c.classList.add("visible"));
-      }
-    }
-  }, []);
-
-  if (!mounted) return null;
+export default async function Home() {
+  const photos = await getGalleryPhotos();
 
   return (
     <main id="main-site">
       <HeroSection />
       <MessageSection />
       <ReasonsSection />
-      <GallerySection />
+      <GallerySection photos={photos} />
       <RecentShoutoutsSection />
       <FinaleSection />
+      <MainSiteInit />
     </main>
   );
 }

@@ -63,19 +63,19 @@ export default function CinematicMusicPlayer() {
 
     audioRefs.current = [audios[0], audios[1]];
 
-    const handleMeta0 = () => {
-      if (activeIndex === 0) setDuration(audios[0].duration);
-    };
-    const handleMeta1 = () => {
-      if (activeIndex === 1) setDuration(audios[1].duration);
+    const handleMetadata = (event: Event) => {
+      const audio = event.currentTarget as HTMLAudioElement | null;
+      if (audio) {
+        setDuration(audio.duration);
+      }
     };
 
-    audios[0].addEventListener("loadedmetadata", handleMeta0);
-    audios[1].addEventListener("loadedmetadata", handleMeta1);
+    audios[0].addEventListener("loadedmetadata", handleMetadata);
+    audios[1].addEventListener("loadedmetadata", handleMetadata);
 
     return () => {
-      audios[0].removeEventListener("loadedmetadata", handleMeta0);
-      audios[1].removeEventListener("loadedmetadata", handleMeta1);
+      audios[0].removeEventListener("loadedmetadata", handleMetadata);
+      audios[1].removeEventListener("loadedmetadata", handleMetadata);
       audios.forEach((a) => {
         a.pause();
         a.src = "";
@@ -83,7 +83,6 @@ export default function CinematicMusicPlayer() {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (crossfadeRafRef.current) cancelAnimationFrame(crossfadeRafRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Crossfade function: smoothly ramp volumes over CROSSFADE_MS
@@ -181,7 +180,7 @@ export default function CinematicMusicPlayer() {
 
     // On homepage: observe #hero
     let observer: IntersectionObserver | null = null;
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const setupObserver = () => {
       const hero = document.getElementById("hero");

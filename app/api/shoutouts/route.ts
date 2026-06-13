@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { isValidYouTubeUrl } from "@/lib/youtube";
 import type { MessageType } from "@/types/shoutout.types";
 
 const PAGE_SIZE = 20;
@@ -51,8 +52,12 @@ export async function GET(request: NextRequest) {
       if (!error) {
         data = fetchedData;
       }
-    } catch {
-      // Database client creation failed or credentials missing
+    } catch (e) {
+      console.error("shoutouts route DB error", e);
+      return Response.json(
+        { error: "Database unavailable" },
+        { status: 500 }
+      );
     }
 
     const MOCK_FALLBACK = [
@@ -118,10 +123,20 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    let shoutouts = data ?? [];
-    let finalTotal = count ?? 0;
-    
-    if (shoutouts.length === 0) {
+    if (data === null || data === undefined) {
+      return Response.json(
+        { error: "Database unavailable" },
+        { status: 500 }
+      );
+    }
+
+    let shoutouts = data;
+    let finalTotal = count ?? shoutouts.length;
+
+    if (page === 1) {
+      shoutouts = [...MOCK_FALLBACK, ...shoutouts];
+      finalTotal += MOCK_FALLBACK.length;
+    } else if (shoutouts.length === 0) {
       shoutouts = MOCK_FALLBACK;
       finalTotal = MOCK_FALLBACK.length;
     }
@@ -129,7 +144,8 @@ export async function GET(request: NextRequest) {
     const hasMore = offset + shoutouts.length < finalTotal;
 
     return Response.json({ shoutouts, total: finalTotal, hasMore });
-  } catch {
+  } catch (e) {
+    console.error("shoutouts route DB error", e);
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -269,7 +285,14 @@ export async function POST(request: NextRequest) {
 
       // ── YouTube URL ──
       if (hasYoutubeUrl && typeof rawYoutubeUrl === "string") {
-        youtubeUrl = rawYoutubeUrl.trim();
+        const trimmedYoutubeUrl = rawYoutubeUrl.trim();
+        if (!isValidYouTubeUrl(trimmedYoutubeUrl)) {
+          return Response.json(
+            { error: "Please enter a valid YouTube URL." },
+            { status: 400 }
+          );
+        }
+        youtubeUrl = trimmedYoutubeUrl;
       }
     }
 
@@ -298,7 +321,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Shoutout submitted!",
     });
-  } catch {
+  } catch (e) {
+    console.error("shoutouts route DB error", e);
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }

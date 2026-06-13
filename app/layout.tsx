@@ -1,3 +1,4 @@
+import localFont from 'next/font/local';
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import Script from 'next/script';
 import CinematicMusicPlayer from '@/components/shared/cinematic-music-player';
@@ -15,8 +16,10 @@ const jost = Jost({
   weight: ['200', '300', '400'],
   variable: '--font-jost',
 });
-
-// Petit Formal Script loaded via @import in globals.css
+const petitFormalScript = localFont({
+  src: './fonts/french-script-mt.ttf',
+  variable: '--font-petit-formal-script',
+});
 
 export const metadata = {
   title: "Naza's Special Day",
@@ -27,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${jost.variable} h-full scroll-smooth`}
+      className={`${cormorant.variable} ${jost.variable} ${petitFormalScript.variable} h-full scroll-smooth`}
       suppressHydrationWarning
     >
       <body className="min-h-full antialiased" suppressHydrationWarning>
