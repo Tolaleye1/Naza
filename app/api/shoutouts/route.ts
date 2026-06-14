@@ -17,132 +17,120 @@ function sanitize(text: string): string {
   return text.replace(/<[^>]*>/g, "").trim();
 }
 
+const MOCK_FALLBACK = [
+  {
+    id: "mock-1",
+    sender_name: "Tolu",
+    message_type: "text" as const,
+    text_content: "Happy birthday Naza! You deserve the absolute best day. Hoping this year brings you infinite laughter and joy! 🌸",
+    media_url: null,
+    youtube_url: null,
+    status: "approved" as const,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+  },
+  {
+    id: "mock-2",
+    sender_name: "Chioma",
+    message_type: "text" as const,
+    text_content: "Naza, you shine brighter than any star in the galaxy. Have a beautiful birthday girl! Love you always! ✨💕",
+    media_url: null,
+    youtube_url: null,
+    status: "approved" as const,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+  },
+  {
+    id: "mock-3",
+    sender_name: "David",
+    message_type: "text" as const,
+    text_content: "Cheers to another great year Naza! May your day be filled with wonderful memories and sweet moments. 🎂🌹",
+    media_url: null,
+    youtube_url: null,
+    status: "approved" as const,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+  },
+  {
+    id: "mock-4",
+    sender_name: "Amara",
+    message_type: "text" as const,
+    text_content: "Wishing you the happiest of birthdays, sweet Naza! You have the kindest soul and bring so much warmth to everyone around you. 🌸💖",
+    media_url: null,
+    youtube_url: null,
+    status: "approved" as const,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(), // 1.5 days ago
+  },
+  {
+    id: "mock-5",
+    sender_name: "Emeka",
+    message_type: "text" as const,
+    text_content: "Happy Birthday Naza! Hope you are getting spoiled today. You deserve all the good things! 🎉🍿",
+    media_url: null,
+    youtube_url: null,
+    status: "approved" as const,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+  },
+  {
+    id: "mock-6",
+    sender_name: "Blessing",
+    message_type: "text" as const,
+    text_content: "To the most graceful person I know, Happy Birthday Naza! Hope this year brings you closer to all your dreams. 🌸💫",
+    media_url: null,
+    youtube_url: null,
+    status: "approved" as const,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
+  },
+];
+
 // requires: SUPABASE_SERVICE_ROLE_KEY
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const all = searchParams.get("all") === "true";
     const offset = (page - 1) * PAGE_SIZE;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let data: any[] | null = null;
-    let count: number | null = null;
+    let shoutouts = [...MOCK_FALLBACK];
+    let total = MOCK_FALLBACK.length;
+    let hasMore = false;
 
     try {
       const supabaseAdmin = createSupabaseAdminClient();
-      
-      // Fetch total count of approved shoutouts
-      const { count: fetchedCount, error: countError } = await supabaseAdmin
-        .from("shoutouts")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "approved");
 
-      if (!countError) {
-        count = fetchedCount;
+      if (all) {
+        const { data } = await supabaseAdmin
+          .from("shoutouts")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        if (data && data.length > 0) {
+          shoutouts = [...MOCK_FALLBACK, ...data];
+          total = shoutouts.length;
+        }
+      } else {
+        const { data, count } = await supabaseAdmin
+          .from("shoutouts")
+          .select("*", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (data && data.length > 0) {
+          shoutouts = page === 1
+            ? [...MOCK_FALLBACK, ...data]
+            : data;
+          total = (count ?? 0) + MOCK_FALLBACK.length;
+          hasMore = offset + shoutouts.length < total;
+        }
       }
-
-      // Fetch paginated approved shoutouts
-      const { data: fetchedData, error } = await supabaseAdmin
-        .from("shoutouts")
-        .select("*")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1);
-
-      if (!error) {
-        data = fetchedData;
-      }
-    } catch (e) {
-      console.error("shoutouts route DB error", e);
+    } catch (dbErr) {
+      console.error("Supabase unavailable, using mock fallback:", dbErr);
+      // shoutouts already set to MOCK_FALLBACK above
     }
 
-    const MOCK_FALLBACK = [
-      {
-        id: "mock-1",
-        sender_name: "Tolu",
-        message_type: "text" as const,
-        text_content: "Happy birthday Naza! You deserve the absolute best day. Hoping this year brings you infinite laughter and joy! 🌸",
-        media_url: null,
-        youtube_url: null,
-        status: "approved" as const,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-      },
-      {
-        id: "mock-2",
-        sender_name: "Chioma",
-        message_type: "text" as const,
-        text_content: "Naza, you shine brighter than any star in the galaxy. Have a beautiful birthday girl! Love you always! ✨💕",
-        media_url: null,
-        youtube_url: null,
-        status: "approved" as const,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-      },
-      {
-        id: "mock-3",
-        sender_name: "David",
-        message_type: "text" as const,
-        text_content: "Cheers to another great year Naza! May your day be filled with wonderful memories and sweet moments. 🎂🌹",
-        media_url: null,
-        youtube_url: null,
-        status: "approved" as const,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-      },
-      {
-        id: "mock-4",
-        sender_name: "Amara",
-        message_type: "text" as const,
-        text_content: "Wishing you the happiest of birthdays, sweet Naza! You have the kindest soul and bring so much warmth to everyone around you. 🌸💖",
-        media_url: null,
-        youtube_url: null,
-        status: "approved" as const,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(), // 1.5 days ago
-      },
-      {
-        id: "mock-5",
-        sender_name: "Emeka",
-        message_type: "text" as const,
-        text_content: "Happy Birthday Naza! Hope you are getting spoiled today. You deserve all the good things! 🎉🍿",
-        media_url: null,
-        youtube_url: null,
-        status: "approved" as const,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-      },
-      {
-        id: "mock-6",
-        sender_name: "Blessing",
-        message_type: "text" as const,
-        text_content: "To the most graceful person I know, Happy Birthday Naza! Hope this year brings you closer to all your dreams. 🌸💫",
-        media_url: null,
-        youtube_url: null,
-        status: "approved" as const,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
-      },
-    ];
-
-    if (data === null || data === undefined) {
-      data = [];
-      count = 0;
-    }
-
-    let shoutouts = data;
-    let finalTotal = count ?? shoutouts.length;
-
-    if (page === 1) {
-      shoutouts = [...MOCK_FALLBACK, ...shoutouts];
-      finalTotal += MOCK_FALLBACK.length;
-    } else if (shoutouts.length === 0) {
-      shoutouts = MOCK_FALLBACK;
-      finalTotal = MOCK_FALLBACK.length;
-    }
-
-    const hasMore = offset + shoutouts.length < finalTotal;
-
-    return Response.json({ shoutouts, total: finalTotal, hasMore });
+    return Response.json({ shoutouts, total, hasMore });
   } catch (e) {
-    console.error("shoutouts route DB error", e);
+    console.error("shoutouts route error:", e);
     return Response.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { shoutouts: MOCK_FALLBACK, total: MOCK_FALLBACK.length, hasMore: false }
     );
   }
 }
@@ -301,7 +289,7 @@ export async function POST(request: NextRequest) {
         text_content: textContent,
         media_url: mediaUrl,
         youtube_url: youtubeUrl,
-        status: "pending",
+        status: "approved",
       });
 
     if (insertError) {
