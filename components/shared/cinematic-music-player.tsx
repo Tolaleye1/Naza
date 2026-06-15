@@ -175,37 +175,10 @@ export default function CinematicMusicPlayer() {
     if (pathname !== "/") {
       // Force Song 2 (index 1) when on other pages
       performSwitch(1);
-      return;
+    } else {
+      // Force Song 1 (index 0) when on homepage
+      performSwitch(0);
     }
-
-    // On homepage: observe #hero
-    let observer: IntersectionObserver | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    const setupObserver = () => {
-      const hero = document.getElementById("hero");
-      if (!hero) {
-        // Retry if hero is not mounted yet
-        timeoutId = setTimeout(setupObserver, 100);
-        return;
-      }
-
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          const targetIndex = entry.isIntersecting ? 0 : 1;
-          performSwitch(targetIndex);
-        },
-        { threshold: 0.1 }
-      );
-      observer.observe(hero);
-    };
-
-    setupObserver();
-
-    return () => {
-      if (observer) observer.disconnect();
-      if (timeoutId) clearTimeout(timeoutId);
-    };
   }, [pathname]);
 
   // Progress update loop — tracks the active song

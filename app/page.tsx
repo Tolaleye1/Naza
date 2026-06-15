@@ -198,13 +198,6 @@ function FinaleSection() {
     <>
       <section id="finale">
         <div className="finale-inner">
-          <div className="finale-flowers">
-            <span className="ff">🌸</span>
-            <span className="ff delay1">🌺</span>
-            <span className="ff delay2">🌹</span>
-            <span className="ff delay3">🌸</span>
-            <span className="ff delay4">🌷</span>
-          </div>
           <p className="finale-eyebrow">always &amp; forever</p>
           <h2 className="finale-title">
             You Are Loved
