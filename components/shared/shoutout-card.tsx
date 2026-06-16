@@ -3,7 +3,6 @@
 import Image from "next/image";
 import type { KeyboardEvent } from "react";
 import type { Shoutout } from "@/types/shoutout.types";
-import { getYouTubeEmbedSrc } from "@/lib/youtube";
 
 interface ShoutoutCardProps {
   shoutout: Shoutout;
@@ -110,10 +109,6 @@ function PhotoCard({ shoutout, onClick }: ShoutoutCardProps) {
 
 /* ─── Video Shoutout Card (White card, video at top, sender name below) ─── */
 function VideoCardSmall({ shoutout, onClick }: ShoutoutCardProps) {
-  const videoSrc = shoutout.media_url || "";
-  const isYouTube = !shoutout.media_url && !!shoutout.youtube_url;
-  const youtubeEmbedSrc = shoutout.youtube_url ? getYouTubeEmbedSrc(shoutout.youtube_url) : "";
-
   return (
     <div
       className="envelope-card"
@@ -123,50 +118,30 @@ function VideoCardSmall({ shoutout, onClick }: ShoutoutCardProps) {
       tabIndex={0}
       aria-label={`Open video shoutout from ${shoutout.sender_name}`}
     >
-      <div className="envelope-inner overflow-hidden">
-        {isYouTube && youtubeEmbedSrc ? (
-          /* YouTube placeholder/embed on card with pointer-events disabled */
-          <div className="relative aspect-video pointer-events-none">
-            <iframe
-              src={youtubeEmbedSrc}
-              title={`Video shoutout from ${shoutout.sender_name}`}
-              className="h-full w-full"
-            />
-          </div>
-        ) : (
-          /* Hosted video placeholder/player on card with pointer-events disabled */
-          <div className="relative aspect-video pointer-events-none">
-            <video
-              src={videoSrc}
-              preload="metadata"
-              playsInline
-              className="h-full w-full object-cover"
-            />
-            {/* Play icon overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-700/90">
-                <svg
-                  className="ml-0.5 h-5 w-5 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
+      <div className="envelope-flap">
+        <span className="flap-heart">♥</span>
+      </div>
+      <div className="envelope-inner">
+        <div className="envelope-body" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <div className="envelope-sender">From: {shoutout.sender_name}</div>
+          <hr className="envelope-divider" />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, minHeight: "60px" }}>
+            <div style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(232, 105, 138, 0.1)",
+              border: "1.5px solid var(--rose)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--rose)",
+              fontSize: "1.2rem",
+              paddingLeft: "3px"
+            }}>
+              ▶
             </div>
           </div>
-        )}
-
-        {/* Sender name below video */}
-        <div className="px-4 py-3 bg-white">
-          <p className="envelope-sender" style={{ marginBottom: 0 }}>
-            From: {shoutout.sender_name}
-          </p>
-          {shoutout.created_at && (
-            <p className="mt-0.5 text-xs text-neutral-500">
-              {formatDate(shoutout.created_at)}
-            </p>
-          )}
         </div>
       </div>
     </div>

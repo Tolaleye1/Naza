@@ -13,9 +13,11 @@ export default function RecentShoutoutsSection() {
   useEffect(() => {
     fetch("/api/shoutouts?page=1")
       .then((r) => r.json())
-      .then((data: { shoutouts: Shoutout[] }) =>
-        setShoutouts(data.shoutouts?.slice(0, 3) || [])
-      )
+      .then((data: { shoutouts: Shoutout[] }) => {
+        const sorted = (data.shoutouts || [])
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setShoutouts(sorted.slice(0, 3));
+      })
       .catch(() => setShoutouts([]));
   }, []);
 

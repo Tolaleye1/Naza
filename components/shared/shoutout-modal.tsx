@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import type { Shoutout } from "@/types/shoutout.types";
-import { getYouTubeEmbedSrc } from "@/lib/youtube";
 
 interface ShoutoutModalProps {
   shoutout: Shoutout;
@@ -39,9 +38,69 @@ const Ornament = () => (
 );
 
 export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps) {
-  const isYouTube = !shoutout.media_url && !!shoutout.youtube_url;
-  const youtubeEmbedSrc = shoutout.youtube_url ? getYouTubeEmbedSrc(shoutout.youtube_url) : "";
   const formattedDate = formatFullDate(shoutout.created_at);
+
+  if (shoutout.message_type === "photo") {
+    return (
+      <div className="letter-modal-overlay" onClick={onClose} style={{ display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }}>
+        <button className="letter-modal-close" onClick={onClose} aria-label="Close" style={{ zIndex: 10 }}>
+          ✕
+        </button>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {shoutout.media_url ? (
+            <Image
+              src={shoutout.media_url}
+              alt={`From ${shoutout.sender_name}`}
+              width={1200}
+              height={900}
+              style={{
+                maxWidth: "90vw",
+                maxHeight: "90vh",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
+                borderRadius: "8px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.5)"
+              }}
+              unoptimized
+            />
+          ) : (
+            <div style={{ color: "#fff" }}>No photo available</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (shoutout.message_type === "video") {
+    return (
+      <div className="letter-modal-overlay" onClick={onClose} style={{ display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }}>
+        <button className="letter-modal-close" onClick={onClose} aria-label="Close" style={{ zIndex: 10 }}>
+          ✕
+        </button>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {shoutout.media_url ? (
+            <video
+              src={shoutout.media_url}
+              controls
+              playsInline
+              autoPlay
+              style={{
+                maxWidth: "90vw",
+                maxHeight: "90vh",
+                width: "auto",
+                height: "auto",
+                borderRadius: "8px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.5)"
+              }}
+            />
+          ) : (
+            <div style={{ color: "#fff" }}>No video available</div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="letter-modal-overlay" onClick={onClose}>
@@ -73,6 +132,7 @@ export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps)
                 width={80}
                 height={80}
                 className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="letter-stamp-placeholder">
@@ -87,38 +147,6 @@ export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps)
         <div className="letter-body">
           {shoutout.text_content}
         </div>
-
-        {/* Media Attachments */}
-        {shoutout.media_url && shoutout.message_type === "photo" && (
-          <Image
-            src={shoutout.media_url}
-            alt={`From ${shoutout.sender_name}`}
-            width={600}
-            height={450}
-            className="letter-media-img"
-            style={{ width: "100%", height: "auto" }}
-          />
-        )}
-
-        {shoutout.media_url && shoutout.message_type === "video" && (
-          <video
-            src={shoutout.media_url}
-            controls
-            playsInline
-            className="letter-media-video"
-          />
-        )}
-
-        {isYouTube && youtubeEmbedSrc && (
-          <div className="letter-youtube-wrap">
-            <iframe
-              src={youtubeEmbedSrc}
-              title={`Video from ${shoutout.sender_name}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
 
         <hr className="letter-rule" />
 

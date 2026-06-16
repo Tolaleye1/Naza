@@ -71,7 +71,8 @@ async function initThree(
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0, 0);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
+  controls.dampingFactor = 0.08;
+  controls.rotateSpeed = 0.6;
   controls.minDistance = 10;
   controls.maxDistance = 60;
   controls.maxPolarAngle = 0.75 * Math.PI;
@@ -190,8 +191,8 @@ async function initThree(
   let frameId = 0;
   const animate = () => {
     frameId = requestAnimationFrame(animate);
-    galaxy.rotation.y += 0.0008;
-    nodeGroup.rotation.y += 0.0008;
+    galaxy.rotation.y += 0.0003;
+    nodeGroup.rotation.y += 0.0003;
     controls.update();
     renderer.render(scene, camera);
     css2dRenderer.render(scene, camera);

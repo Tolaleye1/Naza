@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { MessageType } from "@/types/shoutout.types";
-import { isValidYouTubeUrl } from "@/lib/youtube";
+
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
@@ -31,7 +31,6 @@ export default function ShoutoutPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | undefined>(undefined);
-  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -39,12 +38,10 @@ export default function ShoutoutPage() {
   const profileInputRef = useRef<HTMLInputElement>(null);
 
   const charsRemaining = MAX_TEXT_LENGTH - textContent.length;
-
   function handleTypeChange(type: MessageType) {
     setMessageType(type);
     setTextContent("");
     setMediaFile(null);
-    setYoutubeUrl("");
     setErrorMsg("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
@@ -121,7 +118,6 @@ export default function ShoutoutPage() {
     setMediaFile(null);
     setProfilePic(null);
     setProfilePreview(undefined);
-    setYoutubeUrl("");
     setMessageType("text");
     setStatus("idle");
     setErrorMsg("");
@@ -145,12 +141,8 @@ export default function ShoutoutPage() {
       setErrorMsg("Please select a photo to upload.");
       return;
     }
-    if (messageType === "video" && !mediaFile && !youtubeUrl.trim()) {
-      setErrorMsg("Please select a video or paste a YouTube link.");
-      return;
-    }
-    if (messageType === "video" && youtubeUrl.trim() && !isValidYouTubeUrl(youtubeUrl.trim())) {
-      setErrorMsg("Please enter a valid YouTube URL.");
+    if (messageType === "video" && !mediaFile) {
+      setErrorMsg("Please select a video to upload.");
       return;
     }
 
@@ -170,9 +162,7 @@ export default function ShoutoutPage() {
       if (profilePic) {
         formData.append("profile_picture", profilePic);
       }
-      if (messageType === "video" && youtubeUrl.trim()) {
-        formData.append("youtube_url", youtubeUrl.trim());
-      }
+
 
       const res = await fetch("/api/shoutouts", {
         method: "POST",
@@ -642,39 +632,6 @@ export default function ShoutoutPage() {
                   />
                 </div>
 
-                {!mediaFile && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label
-                      htmlFor="youtube-url"
-                      style={{
-                        fontFamily: "var(--ff-body)",
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                        opacity: 0.6,
-                      }}
-                    >
-                      Or paste a YouTube link
-                    </label>
-                    <input
-                      id="youtube-url"
-                      type="url"
-                      value={youtubeUrl}
-                      onChange={(e) => setYoutubeUrl(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=..."
-                      style={{
-                        backgroundColor: "transparent",
-                        border: "none",
-                        borderBottom: "1px solid var(--glass-border)",
-                        padding: "10px 0",
-                        fontFamily: "var(--ff-body)",
-                        fontSize: "0.95rem",
-                        color: "var(--text-light)",
-                        outline: "none",
-                        transition: "border-color 0.3s",
-                      }}
-                    />
-                  </div>
-                )}
               </div>
             )}
 

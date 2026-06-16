@@ -207,7 +207,6 @@ function FinaleSection() {
           <div className="finale-heart">
             <div className="heart-pulse">💗</div>
           </div>
-          <p className="finale-sig">Made with love, just for Naza 🌸</p>
         </div>
       </section>
       <footer>

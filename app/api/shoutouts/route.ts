@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { isValidYouTubeUrl } from "@/lib/youtube";
 import type { MessageType, Shoutout } from "@/types/shoutout.types";
 
 const PAGE_SIZE = 20;
@@ -88,8 +87,8 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get("all") === "true";
     const offset = (page - 1) * PAGE_SIZE;
 
-    let shoutouts: Shoutout[] = [...MOCK_FALLBACK] as unknown as Shoutout[];
-    let total = MOCK_FALLBACK.length;
+    let shoutouts: Shoutout[] = [];
+    let total = 0;
     let hasMore = false;
 
     try {
@@ -103,8 +102,11 @@ export async function GET(request: NextRequest) {
           .limit(100);
 
         if (data && data.length > 0) {
-          shoutouts = [...MOCK_FALLBACK, ...(data as unknown as Shoutout[])] as unknown as Shoutout[];
-          total = shoutouts.length;
+          shoutouts = data as unknown as Shoutout[];
+          total = data.length;
+        } else {
+          shoutouts = MOCK_FALLBACK as unknown as Shoutout[];
+          total = MOCK_FALLBACK.length;
         }
       } else {
         const { data, count } = await supabaseAdmin
@@ -114,16 +116,20 @@ export async function GET(request: NextRequest) {
           .range(offset, offset + PAGE_SIZE - 1);
 
         if (data && data.length > 0) {
-          shoutouts = page === 1
-            ? [...MOCK_FALLBACK, ...(data as unknown as Shoutout[])] as unknown as Shoutout[]
-            : (data as unknown as Shoutout[]);
-          total = (count ?? 0) + MOCK_FALLBACK.length;
-          hasMore = offset + shoutouts.length < total;
+          shoutouts = data as unknown as Shoutout[];
+          total = count ?? data.length;
+          hasMore = offset + data.length < total;
+        } else {
+          shoutouts = MOCK_FALLBACK as unknown as Shoutout[];
+          total = MOCK_FALLBACK.length;
+          hasMore = false;
         }
       }
     } catch (dbErr) {
       console.error("Supabase unavailable, using mock fallback:", dbErr);
-      // shoutouts already set to MOCK_FALLBACK above
+      shoutouts = MOCK_FALLBACK as unknown as Shoutout[];
+      total = MOCK_FALLBACK.length;
+      hasMore = false;
     }
 
     return Response.json({ shoutouts, total, hasMore });
@@ -145,7 +151,6 @@ export async function POST(request: NextRequest) {
     const rawType = formData.get("message_type");
     const rawText = formData.get("text_content");
     const mediaFile = formData.get("media_file");
-    const rawYoutubeUrl = formData.get("youtube_url");
 
     // ── Validate sender_name ──
     if (!rawName || typeof rawName !== "string" || rawName.trim().length === 0) {
@@ -173,7 +178,6 @@ export async function POST(request: NextRequest) {
     // ── Type-specific validation ──
     let textContent: string | null = null;
     let mediaUrl: string | null = null;
-    let youtubeUrl: string | null = null;
 
     if (messageType === "text") {
       if (!rawText || typeof rawText !== "string" || rawText.trim().length === 0) {
@@ -187,19 +191,14 @@ export async function POST(request: NextRequest) {
 
     if (messageType === "photo" || messageType === "video") {
       const hasFile = mediaFile instanceof File && mediaFile.size > 0;
-      const hasYoutubeUrl =
-        messageType === "video" &&
-        rawYoutubeUrl &&
-        typeof rawYoutubeUrl === "string" &&
-        rawYoutubeUrl.trim().length > 0;
 
-      if (!hasFile && !hasYoutubeUrl) {
+      if (!hasFile) {
         return Response.json(
           {
             error:
               messageType === "photo"
                 ? "A photo file is required."
-                : "A video file or YouTube URL is required.",
+                : "A video file is required.",
           },
           { status: 400 }
         );
@@ -265,17 +264,7 @@ export async function POST(request: NextRequest) {
         mediaUrl = urlData.publicUrl;
       }
 
-      // ── YouTube URL ──
-      if (hasYoutubeUrl && typeof rawYoutubeUrl === "string") {
-        const trimmedYoutubeUrl = rawYoutubeUrl.trim();
-        if (!isValidYouTubeUrl(trimmedYoutubeUrl)) {
-          return Response.json(
-            { error: "Please enter a valid YouTube URL." },
-            { status: 400 }
-          );
-        }
-        youtubeUrl = trimmedYoutubeUrl;
-      }
+
     }
 
     // ── Insert shoutout record ──
@@ -312,7 +301,6 @@ export async function POST(request: NextRequest) {
         message_type: messageType,
         text_content: textContent,
         media_url: mediaUrl,
-        youtube_url: youtubeUrl,
         profile_picture_url: profilePictureUrl,
       });
 
