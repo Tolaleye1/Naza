@@ -7,21 +7,32 @@ import ShoutoutCard from "@/components/shared/shoutout-card";
 import ShoutoutModal from "@/components/shared/shoutout-modal";
 
 export default function RecentShoutoutsSection() {
+  const [visible, setVisible] = useState(true);
   const [shoutouts, setShoutouts] = useState<Shoutout[]>([]);
   const [activeShoutout, setActiveShoutout] = useState<Shoutout | null>(null);
 
   useEffect(() => {
-    fetch("/api/shoutouts?page=1")
+    fetch("/api/admin/settings")
       .then((r) => r.json())
-      .then((data: { shoutouts: Shoutout[] }) => {
-        const sorted = (data.shoutouts || [])
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setShoutouts(sorted.slice(0, 3));
+      .then((data: { visible: boolean }) => {
+        setVisible(data.visible);
+        if (data.visible) {
+          fetch("/api/shoutouts?page=1")
+            .then((r) => r.json())
+            .then((data: { shoutouts: Shoutout[] }) => {
+              const sorted = (data.shoutouts || [])
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              setShoutouts(sorted.slice(0, 3));
+            })
+            .catch(() => setShoutouts([]));
+        }
       })
-      .catch(() => setShoutouts([]));
+      .catch(() => {
+        setVisible(true);
+      });
   }, []);
 
-  if (shoutouts.length === 0) return null;
+  if (!visible || shoutouts.length === 0) return null;
 
   return (
     <>

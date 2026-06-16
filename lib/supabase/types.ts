@@ -45,6 +45,45 @@ export interface Database {
         };
         Relationships: [];
       };
+      site_settings: {
+        Row: {
+          key: string;
+          value: string;
+        };
+        Insert: {
+          key: string;
+          value: string;
+        };
+        Update: {
+          key?: string;
+          value?: string;
+        };
+        Relationships: [];
+      };
+      homepage_gallery: {
+        Row: {
+          slot: number;
+          url: string;
+          storage_path: string;
+          caption: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          slot: number;
+          url: string;
+          storage_path: string;
+          caption?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          slot?: number;
+          url?: string;
+          storage_path?: string;
+          caption?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

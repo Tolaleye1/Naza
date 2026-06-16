@@ -30,7 +30,8 @@ async function initThree(
   width: number,
   height: number,
   shoutouts: ShoutoutWithKey[],
-  onSelect: (s: ShoutoutWithKey) => void
+  onSelect: (s: ShoutoutWithKey) => void,
+  visible: boolean = true
 ) {
   const { CSS2DRenderer, CSS2DObject } = await import("three/examples/jsm/renderers/CSS2DRenderer.js");
   const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js");
@@ -130,63 +131,65 @@ async function initThree(
   const START_RADIUS = 2.5;
   const STEP_RADIUS = 2.2;
 
-  shoutouts.forEach((shoutout, index) => {
-    const armIndex = index % 4;
-    const round = Math.floor(index / 4);
-    const radius = START_RADIUS + (round * STEP_RADIUS);
-    const branchAngle = (armIndex / 4) * Math.PI * 2;
-    const spinAngle = radius * 1.2;
+  if (visible) {
+    shoutouts.forEach((shoutout, index) => {
+      const armIndex = index % 4;
+      const round = Math.floor(index / 4);
+      const radius = START_RADIUS + (round * STEP_RADIUS);
+      const branchAngle = (armIndex / 4) * Math.PI * 2;
+      const spinAngle = radius * 1.2;
 
-    const x = Math.cos(branchAngle + spinAngle) * radius;
-    const z = Math.sin(branchAngle + spinAngle) * radius;
-    const y = 0; // no vertical scatter
+      const x = Math.cos(branchAngle + spinAngle) * radius;
+      const z = Math.sin(branchAngle + spinAngle) * radius;
+      const y = 0; // no vertical scatter
 
-    // Create DOM element for node
-    const nodeDiv = document.createElement("div");
-    nodeDiv.className = "galaxy-node";
-    nodeDiv.setAttribute("data-type", shoutout.message_type);
+      // Create DOM element for node
+      const nodeDiv = document.createElement("div");
+      nodeDiv.className = "galaxy-node";
+      nodeDiv.setAttribute("data-type", shoutout.message_type);
 
-    // Profile picture support
-    const initial = document.createElement("div");
-    initial.className = "galaxy-node-initial";
+      // Profile picture support
+      const initial = document.createElement("div");
+      initial.className = "galaxy-node-initial";
 
-    if (shoutout.profile_picture_url) {
-      const img = document.createElement("img");
-      img.src = shoutout.profile_picture_url;
-      img.alt = shoutout.sender_name;
-      img.className = "galaxy-node-pfp";
-      initial.appendChild(img);
-    } else {
-      initial.textContent = shoutout.sender_name[0].toUpperCase();
-    }
-    nodeDiv.appendChild(initial);
+      if (shoutout.profile_picture_url) {
+        const img = document.createElement("img");
+        img.src = shoutout.profile_picture_url;
+        img.alt = shoutout.sender_name;
+        img.className = "galaxy-node-pfp";
+        initial.appendChild(img);
+      } else {
+        initial.textContent = shoutout.sender_name[0].toUpperCase();
+      }
+      nodeDiv.appendChild(initial);
 
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "galaxy-node-name";
-    nameSpan.textContent = shoutout.sender_name;
-    nodeDiv.appendChild(nameSpan);
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "galaxy-node-name";
+      nameSpan.textContent = shoutout.sender_name;
+      nodeDiv.appendChild(nameSpan);
 
-    const typeIcon = document.createElement("span");
-    typeIcon.className = "galaxy-node-icon";
-    typeIcon.textContent =
-      shoutout.message_type === "text"
-        ? "text"
-        : shoutout.message_type === "photo"
-        ? "photo"
-        : "video";
-    nodeDiv.appendChild(typeIcon);
+      const typeIcon = document.createElement("span");
+      typeIcon.className = "galaxy-node-icon";
+      typeIcon.textContent =
+        shoutout.message_type === "text"
+          ? "text"
+          : shoutout.message_type === "photo"
+          ? "photo"
+          : "video";
+      nodeDiv.appendChild(typeIcon);
 
-    // Click handler
-    nodeDiv.style.pointerEvents = "auto";
-    nodeDiv.addEventListener("click", (e) => {
-      e.stopPropagation();
-      onSelect(shoutout);
+      // Click handler
+      nodeDiv.style.pointerEvents = "auto";
+      nodeDiv.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onSelect(shoutout);
+      });
+
+      const object = new CSS2DObject(nodeDiv);
+      object.position.set(x, y, z);
+      nodeGroup.add(object);
     });
-
-    const object = new CSS2DObject(nodeDiv);
-    object.position.set(x, y, z);
-    nodeGroup.add(object);
-  });
+  }
 
   let frameId = 0;
   const animate = () => {
@@ -226,19 +229,61 @@ function GalaxyView({
   shoutouts,
   onSelect,
   viewMode,
+  visible = true,
 }: {
   shoutouts: ShoutoutWithKey[];
   onSelect: (s: ShoutoutWithKey) => void;
   viewMode: "galaxy" | "normal";
+  visible?: boolean;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [isHidden, setIsHidden] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetTimer = useCallback(() => {
+    if (!visible) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsHidden(true);
+
+    timerRef.current = setTimeout(() => {
+      setIsHidden(false);
+      timerRef.current = setTimeout(() => {
+        setIsHidden(true);
+      }, 6000);
+    }, 10000);
+  }, [visible]);
 
   useEffect(() => {
     // Simple timeout to simulate "galaxy loading"
     const t = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (visible && !loading && viewMode === "galaxy") {
+      setIsHidden(false);
+      timerRef.current = setTimeout(() => {
+        setIsHidden(true);
+      }, 6000);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [visible, loading, viewMode]);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !visible || loading || viewMode !== "galaxy") return;
+
+    mount.addEventListener("pointermove", resetTimer);
+    mount.addEventListener("touchstart", resetTimer);
+
+    return () => {
+      mount.removeEventListener("pointermove", resetTimer);
+      mount.removeEventListener("touchstart", resetTimer);
+    };
+  }, [visible, loading, viewMode, resetTimer]);
 
   useEffect(() => {
     if (viewMode !== "galaxy") return;
@@ -258,7 +303,7 @@ function GalaxyView({
         width = mount.clientWidth;
         height = mount.clientHeight;
         if (width > 0 && height > 0) {
-          initThree(mount, width, height, shoutouts, onSelect).then((cb) => {
+          initThree(mount, width, height, shoutouts, onSelect, visible).then((cb) => {
             cleanup = cb;
           });
         }
@@ -269,16 +314,16 @@ function GalaxyView({
       };
     }
 
-    initThree(mount, width, height, shoutouts, onSelect).then((cb) => {
+    initThree(mount, width, height, shoutouts, onSelect, visible).then((cb) => {
       cleanup = cb;
     });
 
     return () => {
       if (cleanup) cleanup();
     };
-  }, [shoutouts, viewMode, loading, onSelect]);
+  }, [shoutouts, viewMode, loading, onSelect, visible]);
 
-  if (shoutouts.length === 0) {
+  if (shoutouts.length === 0 && visible) {
     return (
       <div className="galaxy-canvas-wrap">
         <div className="galaxy-loading">
@@ -301,12 +346,26 @@ function GalaxyView({
         className="galaxy-mount"
         style={{ position: "relative", width: "100%", height: "100%" }}
       />
+      {visible && !loading && (
+        <div className={`galaxy-instructions ${isHidden ? "galaxy-inst-hidden" : ""}`}>
+          <span>Drag to rotate</span>
+          <span className="galaxy-inst-divider">·</span>
+          <span>Pinch to zoom</span>
+          <span className="galaxy-inst-divider">·</span>
+          <span>Tap a node to open</span>
+        </div>
+      )}
+      {!visible && (
+        <div className="galaxy-coming-soon-overlay">
+          Shoutouts will be revealed soon
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── Main Component ── */
-export default function GalaxyShoutoutsSection() {
+export default function GalaxyShoutoutsSection({ visible = true }: { visible?: boolean }) {
   const [view, setView] = useState<"galaxy" | "normal">("galaxy");
   const [shoutouts, setShoutouts] = useState<ShoutoutWithKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -321,6 +380,10 @@ export default function GalaxyShoutoutsSection() {
   }, [view]);
 
   const fetchShoutouts = useCallback(async (pageNum: number) => {
+    if (!visible) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`/api/shoutouts?page=${pageNum}`);
@@ -339,7 +402,7 @@ export default function GalaxyShoutoutsSection() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [visible]);
 
   useEffect(() => {
     fetchShoutouts(1);
@@ -362,24 +425,26 @@ export default function GalaxyShoutoutsSection() {
             <em>for Naza</em>
           </h2>
           <p className="galaxy-hint">
-            Shoutouts will appear here as stars in the galaxy
+            {visible ? "Shoutouts will appear here as stars in the galaxy" : ""}
           </p>
         </div>
 
-        <div className="view-toggle-wrap">
-          <button
-            className={`view-toggle-btn ${view === "galaxy" ? "active" : ""}`}
-            onClick={() => setView("galaxy")}
-          >
-            Galaxy View
-          </button>
-          <button
-            className={`view-toggle-btn ${view === "normal" ? "active" : ""}`}
-            onClick={() => setView("normal")}
-          >
-            Normal View
-          </button>
-        </div>
+        {visible && (
+          <div className="view-toggle-wrap">
+            <button
+              className={`view-toggle-btn ${view === "galaxy" ? "active" : ""}`}
+              onClick={() => setView("galaxy")}
+            >
+              Galaxy View
+            </button>
+            <button
+              className={`view-toggle-btn ${view === "normal" ? "active" : ""}`}
+              onClick={() => setView("normal")}
+            >
+              Normal View
+            </button>
+          </div>
+        )}
 
         {view === "normal" && (
           <div className="type-filter-row">
@@ -395,8 +460,10 @@ export default function GalaxyShoutoutsSection() {
           </div>
         )}
 
-        {view === "galaxy" ? (
-          <GalaxyView shoutouts={shoutouts} onSelect={setSelected} viewMode={view} />
+        {!visible ? (
+          <GalaxyView shoutouts={[]} onSelect={setSelected} viewMode="galaxy" visible={false} />
+        ) : view === "galaxy" ? (
+          <GalaxyView shoutouts={shoutouts} onSelect={setSelected} viewMode={view} visible={true} />
         ) : (
           (() => {
             const filtered = typeFilter && typeFilter !== 'all'

@@ -1021,3 +1021,55 @@ textarea:-webkit-autofill:focus {
   caret-color: var(--rose-light);
 }
 
+/* Galaxy instructions and coming soon styles */
+.galaxy-instructions {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 105, 138, 0.2);
+  border-radius: 999px;
+  padding: 6px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ff-body);
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: rgba(255, 200, 220, 0.7);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 20;
+  transition: opacity 0.8s ease;
+}
+.galaxy-inst-hidden {
+  opacity: 0 !important;
+}
+.galaxy-inst-divider {
+  opacity: 0.4;
+}
+@media (max-width: 480px) {
+  .galaxy-instructions {
+    font-size: 0.65rem;
+    padding: 5px 14px;
+    gap: 7px;
+  }
+}
+.galaxy-coming-soon-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--ff-script);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--rose);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(232, 105, 138, 0.4);
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 21;
+}
+
+

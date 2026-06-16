@@ -28,7 +28,7 @@ export async function GET() {
 
     const { data: files, error } = await supabase.storage
       .from("gallery")
-      .list("", {
+      .list("gallery", {
         limit: 50,
         sortBy: { column: "name", order: "asc" },
       });
@@ -48,7 +48,7 @@ export async function GET() {
       .map((file) => {
         const { data: urlData } = supabase.storage
           .from("gallery")
-          .getPublicUrl(file.name);
+          .getPublicUrl(`gallery/${file.name}`);
 
         return {
           name: file.name,

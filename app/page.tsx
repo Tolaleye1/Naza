@@ -1,24 +1,27 @@
-import type { GalleryItem } from "@/types/gallery.types";
 import RecentShoutoutsSection from "@/components/sections/recent-shoutouts-section";
 import MainSiteInit from "@/components/shared/main-site-init";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/types";
+
+type HomepagePhoto = Database["public"]["Tables"]["homepage_gallery"]["Row"];
 
 /* ── Declare global initMainSite ── */
-async function getGalleryPhotos(): Promise<GalleryItem[]> {
+async function getGalleryPhotos(): Promise<HomepagePhoto[]> {
   try {
-    const endpoint = process.env.NEXT_PUBLIC_URL
-      ? `${process.env.NEXT_PUBLIC_URL}/api/gallery`
-      : "/api/gallery";
-    const res = await fetch(endpoint, {
-      next: { revalidate: 3600 },
-    });
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("homepage_gallery")
+      .select("*")
+      .order("slot", { ascending: true });
 
-    if (!res.ok) {
+    if (error) {
+      console.error("Error fetching homepage gallery:", error);
       return [];
     }
 
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  } catch {
+    return data || [];
+  } catch (err) {
+    console.error("Unexpected error fetching homepage gallery:", err);
     return [];
   }
 }
@@ -147,7 +150,7 @@ function ReasonsSection() {
    GALLERY SECTION (memories)
    ════════════════════════════════════════════════════════ */
 
-function GallerySection({ photos }: { photos: GalleryItem[] }) {
+function GallerySection({ photos }: { photos: HomepagePhoto[] }) {
   return (
     <section id="memories">
       <div className="section-inner">
@@ -155,17 +158,17 @@ function GallerySection({ photos }: { photos: GalleryItem[] }) {
           Captured in Time
         </h2>
         <div className="gallery-grid">
-          {[0, 1, 2, 3].map((idx) => {
-            const photo = photos[idx];
-            const gcClass = `gc${idx + 1}`;
+          {[1, 2, 3, 4].map((slotNum) => {
+            const photo = photos.find((p) => p.slot === slotNum);
+            const gcClass = `gc${slotNum}`;
             return (
-              <div key={idx} className={`gallery-card glass ${gcClass}`}>
+              <div key={slotNum} className={`gallery-card glass ${gcClass}`}>
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     className="gallery-img"
                     src={photo.url}
-                    alt={photo.caption || `Memory ${idx + 1}`}
+                    alt={photo.caption || `Memory ${slotNum}`}
                   />
                 ) : (
                   <div className="gallery-placeholder">
