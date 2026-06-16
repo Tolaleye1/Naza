@@ -17,6 +17,7 @@ export interface Database {
           text_content: string | null;
           media_url: string | null;
           youtube_url: string | null;
+          profile_picture_url: string | null;
           status: "pending" | "approved" | "rejected";
           created_at: string | null;
         };
@@ -27,6 +28,7 @@ export interface Database {
           text_content?: string | null;
           media_url?: string | null;
           youtube_url?: string | null;
+          profile_picture_url?: string | null;
           status?: "pending" | "approved" | "rejected";
           created_at?: string | null;
         };
@@ -37,6 +39,7 @@ export interface Database {
           text_content?: string | null;
           media_url?: string | null;
           youtube_url?: string | null;
+          profile_picture_url?: string | null;
           status?: "pending" | "approved" | "rejected";
           created_at?: string | null;
         };

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isValidYouTubeUrl } from "@/lib/youtube";
-import type { MessageType } from "@/types/shoutout.types";
+import type { MessageType, Shoutout } from "@/types/shoutout.types";
 
 const PAGE_SIZE = 20;
 
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get("all") === "true";
     const offset = (page - 1) * PAGE_SIZE;
 
-    let shoutouts = [...MOCK_FALLBACK];
+    let shoutouts: Shoutout[] = [...MOCK_FALLBACK] as unknown as Shoutout[];
     let total = MOCK_FALLBACK.length;
     let hasMore = false;
 
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
           .limit(100);
 
         if (data && data.length > 0) {
-          shoutouts = [...MOCK_FALLBACK, ...data];
+          shoutouts = [...MOCK_FALLBACK, ...(data as unknown as Shoutout[])] as unknown as Shoutout[];
           total = shoutouts.length;
         }
       } else {
@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
 
         if (data && data.length > 0) {
           shoutouts = page === 1
-            ? [...MOCK_FALLBACK, ...data]
-            : data;
+            ? [...MOCK_FALLBACK, ...(data as unknown as Shoutout[])] as unknown as Shoutout[]
+            : (data as unknown as Shoutout[]);
           total = (count ?? 0) + MOCK_FALLBACK.length;
           hasMore = offset + shoutouts.length < total;
         }
@@ -281,6 +281,30 @@ export async function POST(request: NextRequest) {
     // ── Insert shoutout record ──
     const supabaseAdmin = createSupabaseAdminClient();
 
+    // Handle optional profile picture upload
+    const profilePicFile = formData.get("profile_picture");
+    let profilePictureUrl: string | null = null;
+
+    if (profilePicFile instanceof File && profilePicFile.size > 0) {
+      const ext = profilePicFile.name.split(".").pop() || "jpg";
+      const pfpFileName = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+      const pfpBuffer = Buffer.from(await profilePicFile.arrayBuffer());
+
+      const { error: pfpError } = await supabaseAdmin.storage
+        .from("profile-pictures")
+        .upload(pfpFileName, pfpBuffer, {
+          contentType: profilePicFile.type,
+          upsert: false,
+        });
+
+      if (!pfpError) {
+        const { data: pfpUrl } = supabaseAdmin.storage
+          .from("profile-pictures")
+          .getPublicUrl(pfpFileName);
+        profilePictureUrl = pfpUrl.publicUrl;
+      }
+    }
+
     const { error: insertError } = await supabaseAdmin
       .from("shoutouts")
       .insert({
@@ -289,7 +313,7 @@ export async function POST(request: NextRequest) {
         text_content: textContent,
         media_url: mediaUrl,
         youtube_url: youtubeUrl,
-        status: "approved",
+        profile_picture_url: profilePictureUrl,
       });
 
     if (insertError) {

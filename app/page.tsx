@@ -146,16 +146,13 @@ function ReasonsSection() {
 /* ════════════════════════════════════════════════════════
    GALLERY SECTION (memories)
    ════════════════════════════════════════════════════════ */
-const GALLERY_CAPTIONS = ["forever", "my love", "together", "always"];
 
 function GallerySection({ photos }: { photos: GalleryItem[] }) {
   return (
     <section id="memories">
       <div className="section-inner">
-        <p className="section-eyebrow">captured in time</p>
-        <h2 className="section-title">
-          Naza, Beautiful<br />
-          <em>Always</em>
+        <h2 className="section-title" style={{ fontFamily: "var(--ff-script)" }}>
+          Captured in Time
         </h2>
         <div className="gallery-grid">
           {[0, 1, 2, 3].map((idx) => {
@@ -176,9 +173,6 @@ function GallerySection({ photos }: { photos: GalleryItem[] }) {
                     <p>Coming soon...</p>
                   </div>
                 )}
-                <div className="gallery-caption">
-                  {photo?.caption || GALLERY_CAPTIONS[idx]}
-                </div>
               </div>
             );
           })}
@@ -217,7 +211,7 @@ function FinaleSection() {
         </div>
       </section>
       <footer>
-        <p>🌸 crafted with love &amp; petals, just for Naza 🌸</p>
+        <p>Made with love, just for Naza</p>
       </footer>
     </>
   );

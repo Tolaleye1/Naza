@@ -33,7 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${cormorant.variable} ${jost.variable} ${petitFormalScript.variable} h-full scroll-smooth`}
       suppressHydrationWarning
     >
-      <body className="min-h-full antialiased" suppressHydrationWarning>
+      <body
+        className="min-h-full antialiased"
+        style={{ backgroundColor: '#0e0208' }}
+        suppressHydrationWarning
+      >
         <div id="global-bg-layer" aria-hidden="true" />
         <div className="cinematic-vignette" aria-hidden="true" />
         <div id="falling-petals" aria-hidden="true" />

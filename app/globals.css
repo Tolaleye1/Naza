@@ -5,6 +5,11 @@
 
 :root{--rose:#e8698a;--rose-light:#f4a7bb;--rose-pale:#fce4ec;--blush:#ffd6e0;--cream:#fff8f3;--gold:#f7c873;--white:#fff;--text-dark:#4a2535;--text-mid:#7a4055;--text-soft:#b07890;--glass-bg:#ffffff0d;--glass-border:#ff96b426;--shadow:#00000080;--glow:#b4325a59;--dark-wine:#0e0208;--dark-crimson:#1a0510;--dark-rose:#2e0a1e;--mid-rose:#4a1230;--text-light:#ffdcebeb;--text-muted:#c896aab3;--ff-display:var(--font-cormorant),serif;--ff-script:var(--font-petit-formal-script),cursive;--ff-body:var(--font-jost),sans-serif;--text-hero:clamp(3rem,8vw,6rem);--text-xl:clamp(2rem,5vw,4rem);--text-lg:clamp(1.25rem,2.5vw,1.75rem);--text-base:1.05rem;--text-sm:.85rem;--text-xs:.75rem;--background:#0e0208;--foreground:#ffdcebeb;--card:#ffffff0d;--card-foreground:#ffdcebf2;--popover:#1a0510;--popover-foreground:#ffdcebf2;--primary:#e8698a;--primary-foreground:#0e0208;--secondary:#ffffff0d;--secondary-foreground:#ffdcebeb;--muted:#1a0510;--muted-foreground:#c896aab3;--accent:#f4a7bb;--accent-foreground:#ffdcebf2;--destructive:#c0392b;--border:#ff96b426;--input:#ff96b41a;--ring:#f4a7bb;--radius:1.5rem;--color-success:#4a7c59;--color-error:#c0392b}
 
+html, body {
+  background-color: #0e0208;
+  overscroll-behavior: none;
+}
+
 .hidden{display:none!important}
 
 .italic{font-style:italic}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0e0208}::-webkit-scrollbar-thumb{background:#a0325a80;border-radius:10px}
@@ -387,7 +392,7 @@
 
 .finale-sig{color:#ffb6c1d9;font-size:1.4rem}
 
-.finale-sig,footer{font-family:var(--ff-script)}footer{text-align:center;color:#ffb6c199;z-index:15;border-top:1px solid #a0325a26;padding:30px 20px;font-size:1.1rem;position:relative;background:#08020cf2!important}
+.finale-sig,footer{font-family:var(--ff-script)}footer{text-align:center;color:#ffb6c199;z-index:15;border-top:1px solid #a0325a26;padding:30px 20px;font-size:1.1rem;position:relative;background:#08020cf2!important;margin: 0;width: 100%;box-sizing: border-box;border-radius: 0;}
 
 #cp-toggle-btn{z-index:9999;cursor:pointer;-webkit-backdrop-filter:blur(20px)saturate(1.5);backdrop-filter:blur(20px)saturate(1.5);will-change:transform;-webkit-user-select:none;user-select:none;background:#14050fe0;border:none;border-radius:50%;justify-content:center;align-items:center;width:52px;height:52px;transition:transform .3s cubic-bezier(.23,1,.32,1),box-shadow .3s,background .3s;animation:cp-toggle-float 5s ease-in-out infinite;display:flex;position:fixed;bottom:28px;right:28px;box-shadow:0 8px 32px #0009,inset 0 0 0 1px #ff96b42e,0 0 20px #b4325a26}
 
@@ -739,10 +744,11 @@
 
 .envelope-sender {
   font-family: var(--ff-script);
-  font-size: 1.1rem;
+  font-size: 1.8rem;
   color: #8B1A1A;
-  margin-bottom: 10px;
+  margin-bottom: -6px;
   font-style: italic;
+  line-height: 1;
 }
 
 .envelope-divider {
@@ -828,10 +834,11 @@
 
 .letter-date {
   font-family: var(--ff-script);
-  font-size: 0.85rem;
+  font-size: 1.7rem;
   color: #8B1A1A;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: -6px;
+  line-height: 1;
 }
 
 .letter-date-line {
@@ -946,9 +953,11 @@
 }
 .letter-signature-from {
   font-family: var(--ff-script);
-  font-size: 0.95rem;
+  font-size: 1.7rem;
   color: #8B1A1A;
   display: block;
+  line-height: 1;
+  margin-bottom: -6px;
 }
 .letter-signature-name {
   font-family: var(--ff-script);
@@ -956,7 +965,7 @@
   color: #8B1A1A;
   font-weight: normal;
   display: block;
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 .letter-ornament {
@@ -966,3 +975,34 @@
 }
 .letter-ornament-tl { top: 12px; left: 12px; }
 .letter-ornament-bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+
+@media (max-width: 768px) {
+  #hero {
+    padding-top: 20px;
+    min-height: calc(100vh - 70px);
+    align-items: flex-start;
+    padding-bottom: 40px;
+  }
+
+  .hero-content {
+    padding-top: 20px;
+  }
+}
+
+input, textarea {
+  -webkit-text-fill-color: var(--text-light);
+  caret-color: var(--rose-light);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-light);
+  -webkit-box-shadow: 0 0 0px 1000px #1a0510 inset;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--rose-light);
+}
+
