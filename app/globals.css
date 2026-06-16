@@ -491,6 +491,7 @@ html, body {
 .recent-scroll-btn-right{right:4px}}
 
 #galaxy-shoutouts{padding:80px 0 60px;overflow:hidden}
+#shoutout-form{padding:120px 20px 80px}
 
 #galaxy-shoutouts .section-inner{margin-bottom:24px;padding:0 20px}
 
@@ -986,6 +987,11 @@ html, body {
 
   .hero-content {
     padding-top: 20px;
+  }
+
+  #gift, #shoutout-form, #galaxy-shoutouts {
+    padding-top: 20px;
+    padding-bottom: 40px;
   }
 }
 

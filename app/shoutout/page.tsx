@@ -200,7 +200,7 @@ export default function ShoutoutPage() {
       <main>
         <section
           id="shoutout-form"
-          className="bg-transparent px-4 py-32 sm:px-8 lg:px-16"
+          className="bg-transparent px-4 sm:px-8 lg:px-16"
         >
           <div className="mx-auto max-w-lg">
             <div className="glass" style={{ padding: "48px 36px", textAlign: "center" }}>
@@ -250,7 +250,7 @@ export default function ShoutoutPage() {
   // ── Form state ──
   return (
     <main>
-      <section id="shoutout-form" style={{ padding: "120px 20px 80px" }}>
+      <section id="shoutout-form">
         <div className="section-inner" style={{ maxWidth: "600px" }}>
           <p className="section-eyebrow">leave your love</p>
           <h2 className="section-title">
