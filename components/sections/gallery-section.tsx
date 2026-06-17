@@ -1,56 +1,60 @@
 import type { GalleryItem } from "@/types/gallery.types";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import GalleryTabs from "./gallery-tabs";
 
-/** Fetch gallery items from internal API route at request time */
-async function getGalleryItems(): Promise<{ pinned: GalleryItem[]; unpinned: GalleryItem[]; hasMore: boolean }> {
+/** Query Supabase directly instead of self-referencing API fetch */
+async function getGalleryItems(): Promise<GalleryItem[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/gallery?page=1&limit=20`, {
-      cache: "no-store",
-    });
+    const supabase = createSupabaseAdminClient();
 
-    if (!res.ok) return { pinned: [], unpinned: [], hasMore: false };
+    const { data, error } = await supabase
+      .from("gallery_items")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    return await res.json();
+    if (error) {
+      console.error("Gallery fetch error:", error.message);
+      return [];
+    }
+
+    return Array.isArray(data) ? data : [];
   } catch {
-    // Graceful fallback — bucket may be empty or env vars missing
-    return { pinned: [], unpinned: [], hasMore: false };
+    return [];
   }
 }
 
 export default async function GallerySection() {
-  const { pinned, unpinned, hasMore } = await getGalleryItems();
+  const items = await getGalleryItems();
+  const photos = items.filter((i) => i.media_type === "photo");
+  const videos = items.filter((i) => i.media_type === "video");
 
   return (
-    <section
-      id="gallery"
-      className="min-h-screen bg-burgundy-mid px-4 py-24 sm:px-8 lg:px-16"
-    >
-      {/* Heading */}
-      <h2 className="mb-4 text-center font-display text-section text-cream-text">
-        Us, Through the Years
-      </h2>
-      <p className="mb-12 text-center font-script text-lead text-rose-light">
-        Every moment, forever ours
-      </p>
+    <section id="gallery" style={{ padding: "100px 20px 80px" }}>
+      <div className="section-inner">
+        <p className="section-eyebrow">through the years</p>
+        <h2 className="section-title">
+          Us, Forever<br />
+          <em>Captured</em>
+        </h2>
 
-      {/* Content */}
-      {pinned.length === 0 && unpinned.length === 0 ? (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-20">
-          <span className="mb-4 text-5xl" role="img" aria-label="heart">
-            💕
-          </span>
-          <p className="font-display text-lg text-cream-muted">
-            Coming soon...
-          </p>
-          <p className="mt-2 font-body text-sm text-cream-muted/60">
-            Our gallery is being prepared with love
-          </p>
-        </div>
-      ) : (
-        <GalleryTabs initialPinned={pinned} initialUnpinned={unpinned} initialHasMore={hasMore} />
-      )}
+        {items.length === 0 ? (
+          <div style={{
+            display: "flex", flexDirection: "column",
+            alignItems: "center", padding: "60px 20px", gap: 16
+          }}>
+            <span style={{ fontSize: "3.5rem" }}>💕</span>
+            <p style={{
+              fontFamily: "var(--ff-display)",
+              color: "var(--text-muted)",
+              fontSize: "1.1rem"
+            }}>
+              Our gallery is being prepared with love...
+            </p>
+          </div>
+        ) : (
+          <GalleryTabs photos={photos} videos={videos} />
+        )}
+      </div>
     </section>
   );
 }

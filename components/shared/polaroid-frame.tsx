@@ -1,4 +1,6 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
 
 interface PolaroidFrameProps {
   src: string;
@@ -11,53 +13,35 @@ export default function PolaroidFrame({
   src,
   alt,
   caption,
-  rotation = 0,
 }: PolaroidFrameProps) {
-  return (
-    <div
-      className="group mb-6 inline-block w-full break-inside-avoid"
-      style={{
-        transform: `rotate(${rotation}deg)`,
-        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-      }}
-      /* Hover: rotate back to 0 and lift — applied via onMouseEnter/Leave for inline style override */
-    >
-      <div
-        className="overflow-hidden border-[20px] border-b-[52px] border-white transition-all duration-200 group-hover:-translate-y-1"
-        style={{
-          boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-        }}
-      >
-        {/* Photo */}
-        <div className="relative aspect-[4/3] w-full">
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-            loading="lazy"
-          />
-        </div>
+  const [isLoaded, setIsLoaded] = useState(false);
 
-        {/* Caption inside the thick bottom border area — positioned via negative margin */}
-        {caption && (
-          <p
-            className="mt-2 text-center font-script text-sm text-ink"
-            style={{ marginBottom: "-36px" }}
-          >
+  return (
+    <div className="group relative aspect-square w-full overflow-hidden rounded-2xl bg-burgundy-card/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+      {/* Skeleton placeholder */}
+      {!isLoaded && (
+        <div className="absolute inset-0 h-full w-full animate-pulse bg-burgundy-card/40" />
+      )}
+      
+      {/* Image */}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${
+          isLoaded ? "opacity-100 scale-100" : "opacity-0"
+        }`}
+      />
+
+      {/* Hover Overlay with Caption */}
+      {caption && isLoaded && (
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <p className="text-center font-display text-xs sm:text-sm text-cream-text line-clamp-2">
             {caption}
           </p>
-        )}
-      </div>
-
-      {/* CSS for hover rotation reset */}
-      <style>{`
-        .group:hover {
-          transform: rotate(0deg) translateY(-4px) !important;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-        }
-      `}</style>
+        </div>
+      )}
     </div>
   );
 }

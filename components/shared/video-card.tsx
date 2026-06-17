@@ -13,36 +13,42 @@ export default function VideoCard({ src, name }: VideoCardProps) {
 
   function handlePlay() {
     if (videoRef.current) {
-      videoRef.current.play();
-      setIsPlaying(true);
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
     }
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-burgundy-card transition-all duration-300 hover:-translate-y-1">
+    <div className="group relative aspect-square w-full overflow-hidden rounded-2xl bg-burgundy-card/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
       {/* Video container */}
-      <div className="relative">
+      <div className="relative h-full w-full">
         <video
           ref={videoRef}
           src={src}
           controls={isPlaying}
           preload="metadata"
           playsInline
-          className="aspect-video w-full object-cover"
+          className="h-full w-full object-cover"
           onEnded={() => setIsPlaying(false)}
           onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
         />
 
-        {/* Play button overlay — hidden once playing */}
+        {/* Play/Pause overlay button */}
         {!isPlaying && (
           <button
             onClick={handlePlay}
             aria-label={`Play ${name}`}
             className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/40"
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-crimson/90 transition-transform hover:scale-110">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-crimson/90 transition-transform group-hover:scale-110">
               <svg
-                className="ml-1 h-7 w-7 text-cream-text"
+                className="ml-1 h-6 w-6 text-cream-text"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -53,10 +59,14 @@ export default function VideoCard({ src, name }: VideoCardProps) {
         )}
       </div>
 
-      {/* Caption */}
-      <p className="px-4 py-3 text-center font-body text-sm text-cream-muted">
-        {name}
-      </p>
+      {/* Hover Overlay with Name/Caption */}
+      {name && (
+        <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <p className="text-center font-display text-xs sm:text-sm text-cream-text line-clamp-2">
+            {name}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

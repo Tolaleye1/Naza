@@ -473,7 +473,7 @@ export default function GalleryTabs({ photos, videos }: GalleryTabsProps) {
                   (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
                 }}
               >
-                Load More ✨
+                Load More
               </button>
             </div>
           )}

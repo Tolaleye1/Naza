@@ -1,6 +1,7 @@
 import RecentShoutoutsSection from "@/components/sections/recent-shoutouts-section";
 import MainSiteInit from "@/components/shared/main-site-init";
-import type { GalleryItem } from "@/types/gallery.types";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import HomepageGalleryGrid from "@/components/sections/homepage-gallery-grid";
 
 interface HomepagePhoto {
   slot: number;
@@ -8,19 +9,26 @@ interface HomepagePhoto {
   caption?: string | null;
 }
 
-/* ── Declare global initMainSite ── */
+/* ── Force dynamic rendering so Supabase queries run at request time ── */
+export const dynamic = "force-dynamic";
+
+/* ── Query Supabase directly instead of self-referencing fetch ── */
 async function getGalleryPhotos(): Promise<HomepagePhoto[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/gallery?context=homepage`, {
-      cache: "no-store",
-    });
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("gallery_items")
+      .select("*")
+      .eq("pin_type", "captured_in_time")
+      .order("created_at", { ascending: false })
+      .limit(4);
 
-    if (!res.ok) return [];
-    const data: GalleryItem[] = await res.json();
+    if (error) {
+      console.error("Homepage gallery fetch error:", error.message);
+      return [];
+    }
 
-    // Map captured_in_time items (up to 4) to slots 1 to 4
-    return data.map((item: GalleryItem, index: number) => ({
+    return (data || []).map((item, index) => ({
       slot: index + 1,
       url: item.url,
       caption: item.caption,
@@ -162,29 +170,7 @@ function GallerySection({ photos }: { photos: HomepagePhoto[] }) {
         <h2 className="section-title" style={{ fontFamily: "var(--ff-script)" }}>
           Captured in Time
         </h2>
-        <div className="gallery-grid">
-          {[1, 2, 3, 4].map((slotNum) => {
-            const photo = photos.find((p) => p.slot === slotNum);
-            const gcClass = `gc${slotNum}`;
-            return (
-              <div key={slotNum} className={`gallery-card glass ${gcClass}`}>
-                {photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    className="gallery-img"
-                    src={photo.url}
-                    alt={photo.caption || `Memory ${slotNum}`}
-                  />
-                ) : (
-                  <div className="gallery-placeholder">
-                    <div className="gp-icon">🌸</div>
-                    <p>Coming soon...</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <HomepageGalleryGrid photos={photos} />
       </div>
     </section>
   );
