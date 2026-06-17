@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface HomepagePhoto {
@@ -11,6 +11,17 @@ interface HomepagePhoto {
 
 export default function HomepageGalleryGrid({ photos }: { photos: HomepagePhoto[] }) {
   const [activePhoto, setActivePhoto] = useState<HomepagePhoto | null>(null);
+
+  // Lock body scrolling when lightbox is active
+  useEffect(() => {
+    if (activePhoto) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [activePhoto]);
 
   return (
     <>
