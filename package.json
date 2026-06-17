@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "upload-gallery": "npx ts-node --project tsconfig.json scripts/upload-gallery-pictures.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -18,6 +19,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
     "next": "^15.5.18",
+    "pg": "^8.21.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "shadcn": "^4.7.0",

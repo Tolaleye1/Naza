@@ -60,27 +60,33 @@ export interface Database {
         };
         Relationships: [];
       };
-      homepage_gallery: {
+      gallery_items: {
         Row: {
-          slot: number;
-          url: string;
+          id: string;
           storage_path: string;
+          url: string;
+          media_type: "photo" | "video";
           caption: string | null;
-          updated_at: string | null;
+          pin_type: "captured_in_time" | "featured" | null;
+          created_at: string | null;
         };
         Insert: {
-          slot: number;
-          url: string;
+          id?: string;
           storage_path: string;
+          url: string;
+          media_type: "photo" | "video";
           caption?: string | null;
-          updated_at?: string | null;
+          pin_type?: "captured_in_time" | "featured" | null;
+          created_at?: string | null;
         };
         Update: {
-          slot?: number;
-          url?: string;
+          id?: string;
           storage_path?: string;
+          url?: string;
+          media_type?: "photo" | "video";
           caption?: string | null;
-          updated_at?: string | null;
+          pin_type?: "captured_in_time" | "featured" | null;
+          created_at?: string | null;
         };
         Relationships: [];
       };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import type { Shoutout } from "@/types/shoutout.types";
 
@@ -39,6 +40,29 @@ const Ornament = () => (
 
 export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps) {
   const formattedDate = formatFullDate(shoutout.created_at);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (shoutout.message_type !== "video") return;
+
+    window.dispatchEvent(new CustomEvent("naza:video:play"));
+
+    const videoEl = videoRef.current;
+    const handleEnded = () => {
+      window.dispatchEvent(new CustomEvent("naza:video:stop"));
+    };
+
+    if (videoEl) {
+      videoEl.addEventListener("ended", handleEnded);
+    }
+
+    return () => {
+      window.dispatchEvent(new CustomEvent("naza:video:stop"));
+      if (videoEl) {
+        videoEl.removeEventListener("ended", handleEnded);
+      }
+    };
+  }, [shoutout.message_type]);
 
   if (shoutout.message_type === "photo") {
     return (
@@ -81,6 +105,7 @@ export default function ShoutoutModal({ shoutout, onClose }: ShoutoutModalProps)
         <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {shoutout.media_url ? (
             <video
+              ref={videoRef}
               src={shoutout.media_url}
               controls
               playsInline

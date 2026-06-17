@@ -1,6 +1,9 @@
 export interface GalleryItem {
-  name: string;
+  id: string;
+  storage_path: string;
   url: string;
-  type: "photo" | "video";
-  caption?: string;
+  media_type: "photo" | "video";
+  caption: string | null;
+  pin_type: "captured_in_time" | "featured" | null;
+  created_at?: string | null;
 }

@@ -2,27 +2,24 @@ import type { GalleryItem } from "@/types/gallery.types";
 import GalleryTabs from "./gallery-tabs";
 
 /** Fetch gallery items from internal API route at request time */
-async function getGalleryItems(): Promise<GalleryItem[]> {
+async function getGalleryItems(): Promise<{ pinned: GalleryItem[]; unpinned: GalleryItem[]; hasMore: boolean }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/gallery`, {
+    const res = await fetch(`${baseUrl}/api/gallery?page=1&limit=20`, {
       cache: "no-store",
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) return { pinned: [], unpinned: [], hasMore: false };
 
-    const data: GalleryItem[] = await res.json();
-    return data;
+    return await res.json();
   } catch {
     // Graceful fallback — bucket may be empty or env vars missing
-    return [];
+    return { pinned: [], unpinned: [], hasMore: false };
   }
 }
 
 export default async function GallerySection() {
-  const items = await getGalleryItems();
-  const photos = items.filter((item) => item.type === "photo");
-  const videos = items.filter((item) => item.type === "video");
+  const { pinned, unpinned, hasMore } = await getGalleryItems();
 
   return (
     <section
@@ -38,7 +35,7 @@ export default async function GallerySection() {
       </p>
 
       {/* Content */}
-      {items.length === 0 ? (
+      {pinned.length === 0 && unpinned.length === 0 ? (
         /* Empty state */
         <div className="flex flex-col items-center justify-center py-20">
           <span className="mb-4 text-5xl" role="img" aria-label="heart">
@@ -52,7 +49,7 @@ export default async function GallerySection() {
           </p>
         </div>
       ) : (
-        <GalleryTabs photos={photos} videos={videos} />
+        <GalleryTabs initialPinned={pinned} initialUnpinned={unpinned} initialHasMore={hasMore} />
       )}
     </section>
   );

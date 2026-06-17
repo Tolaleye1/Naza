@@ -1,25 +1,30 @@
 import RecentShoutoutsSection from "@/components/sections/recent-shoutouts-section";
 import MainSiteInit from "@/components/shared/main-site-init";
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import type { Database } from "@/lib/supabase/types";
+import type { GalleryItem } from "@/types/gallery.types";
 
-type HomepagePhoto = Database["public"]["Tables"]["homepage_gallery"]["Row"];
+interface HomepagePhoto {
+  slot: number;
+  url: string;
+  caption?: string | null;
+}
 
 /* ── Declare global initMainSite ── */
 async function getGalleryPhotos(): Promise<HomepagePhoto[]> {
   try {
-    const supabaseAdmin = createSupabaseAdminClient();
-    const { data, error } = await supabaseAdmin
-      .from("homepage_gallery")
-      .select("*")
-      .order("slot", { ascending: true });
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/gallery?context=homepage`, {
+      cache: "no-store",
+    });
 
-    if (error) {
-      console.error("Error fetching homepage gallery:", error);
-      return [];
-    }
+    if (!res.ok) return [];
+    const data: GalleryItem[] = await res.json();
 
-    return data || [];
+    // Map captured_in_time items (up to 4) to slots 1 to 4
+    return data.map((item: GalleryItem, index: number) => ({
+      slot: index + 1,
+      url: item.url,
+      caption: item.caption,
+    }));
   } catch (err) {
     console.error("Unexpected error fetching homepage gallery:", err);
     return [];

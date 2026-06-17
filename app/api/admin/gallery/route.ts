@@ -43,10 +43,45 @@ export async function POST(request: Request) {
       .from("gallery")
       .getPublicUrl(storagePath);
 
+    // Determine media type
+    const lowerName = file.name.toLowerCase();
+    const VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"];
+    let mediaType: "photo" | "video" = "photo";
+    if (VIDEO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))) {
+      mediaType = "video";
+    }
+
+    // Derive caption
+    const caption = file.name
+      .replace(/\.[^.]+$/, "")
+      .replace(/[_-]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // Insert into gallery_items
+    const { data: insertedData, error: insertError } = await supabaseAdmin
+      .from("gallery_items")
+      .insert({
+        storage_path: storagePath,
+        url: urlData.publicUrl,
+        media_type: mediaType,
+        caption: caption,
+        pin_type: null,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Gallery db insert error:", insertError.message);
+      // Rollback uploaded file from storage
+      await supabaseAdmin.storage.from("gallery").remove([storagePath]);
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
     return NextResponse.json({
       success: true,
       url: urlData.publicUrl,
       name: storagePath.split("/").pop(),
+      id: insertedData.id,
     });
   } catch (error) {
     console.error("Gallery upload error:", error);

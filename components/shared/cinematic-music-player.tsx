@@ -45,11 +45,50 @@ export default function CinematicMusicPlayer() {
   const isPlayingRef = useRef(isPlaying);
   const activeIndexRef = useRef(activeIndex);
 
+  const [wasPausedByVideo, setWasPausedByVideo] = useState(false);
+  const wasPausedByVideoRef = useRef(wasPausedByVideo);
+
+  useEffect(() => {
+    wasPausedByVideoRef.current = wasPausedByVideo;
+  }, [wasPausedByVideo]);
+
   useEffect(() => {
     unlockedRef.current = unlocked;
     isPlayingRef.current = isPlaying;
     activeIndexRef.current = activeIndex;
   }, [unlocked, isPlaying, activeIndex]);
+
+  useEffect(() => {
+    function onVideoPlay() {
+      const audio = audioRefs.current[activeIndexRef.current];
+      if (audio && !audio.paused && isPlayingRef.current) {
+        audio.pause();
+        setIsPlaying(false);
+        setWasPausedByVideo(true);
+      }
+    }
+
+    function onVideoStop() {
+      if (wasPausedByVideoRef.current) {
+        const audio = audioRefs.current[activeIndexRef.current];
+        if (audio) {
+          audio.volume = MAX_VOLUME;
+          void audio.play().then(() => {
+            setIsPlaying(true);
+            setWasPausedByVideo(false);
+          });
+        }
+      }
+    }
+
+    window.addEventListener("naza:video:play", onVideoPlay);
+    window.addEventListener("naza:video:stop", onVideoStop);
+
+    return () => {
+      window.removeEventListener("naza:video:play", onVideoPlay);
+      window.removeEventListener("naza:video:stop", onVideoStop);
+    };
+  }, []);
 
   // Create both audio elements on mount
   useEffect(() => {
