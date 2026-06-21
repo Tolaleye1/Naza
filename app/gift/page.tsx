@@ -8,9 +8,9 @@ function isConfigurationPlaceholder(value: string): boolean {
 }
 
 const GIFT_DETAILS = [
-  { label: "Bank", value: process.env.NEXT_PUBLIC_BANK_NAME ?? "" },
-  { label: "Account", value: process.env.NEXT_PUBLIC_ACCOUNT_NUMBER ?? "" },
-  { label: "Name", value: process.env.NEXT_PUBLIC_ACCOUNT_NAME ?? "" },
+  { label: "Bank", value: "Kuda" },
+  { label: "Account", value: "2059553438" },
+  { label: "Name", value: "Chinaza Modupe Ojukwu" },
 ];
 
 function CopyRow({ label, value }: { label: string; value: string }) {
