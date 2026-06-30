@@ -12,9 +12,7 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
   { value: "video", label: "Video", icon: "🎥" },
 ];
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-const MAX_PROFILE_SIZE = 2 * 1024 * 1024;
+const MAX_PROFILE_SIZE = 5 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 500;
 const ALLOWED_PROFILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -62,7 +60,7 @@ export default function ShoutoutPage() {
     }
 
     if (file.size > MAX_PROFILE_SIZE) {
-      setErrorMsg("Profile picture must be under 2MB.");
+      setErrorMsg("Profile picture must be under 5MB.");
       setProfilePic(null);
       setProfilePreview(undefined);
       return;
@@ -88,11 +86,6 @@ export default function ShoutoutPage() {
         setMediaFile(null);
         return;
       }
-      if (file.size > MAX_IMAGE_SIZE) {
-        setErrorMsg("Photo must be under 5MB.");
-        setMediaFile(null);
-        return;
-      }
     }
 
     if (messageType === "video") {
@@ -101,11 +94,7 @@ export default function ShoutoutPage() {
         setMediaFile(null);
         return;
       }
-      if (file.size > MAX_VIDEO_SIZE) {
-        setErrorMsg("Video must be under 50MB.");
-        setMediaFile(null);
-        return;
-      }
+
     }
 
     setErrorMsg("");
@@ -149,6 +138,91 @@ export default function ShoutoutPage() {
     setStatus("loading");
 
     try {
+      let mediaUrl: string | null = null;
+      let profilePictureUrl: string | null = null;
+
+      // ── Direct-to-Supabase upload for media files ──
+      if (mediaFile && (messageType === "photo" || messageType === "video")) {
+        // Step 1: Get a signed upload URL
+        let uploadUrlRes: Response;
+        try {
+          uploadUrlRes = await fetch("/api/shoutouts/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: mediaFile.name,
+              fileType: mediaFile.type,
+              bucket: "shoutouts-media",
+            }),
+          });
+        } catch {
+          setErrorMsg("Could not prepare upload. Please try again.");
+          setStatus("error");
+          return;
+        }
+
+        const uploadUrlData = await uploadUrlRes.json();
+        if (!uploadUrlRes.ok) {
+          setErrorMsg(uploadUrlData.error || "Could not prepare upload. Please try again.");
+          setStatus("error");
+          return;
+        }
+
+        // Step 2: Upload directly to Supabase Storage (bypasses serverless function)
+        try {
+          const directUploadRes = await fetch(uploadUrlData.signedUrl, {
+            method: "PUT",
+            headers: { "Content-Type": mediaFile.type },
+            body: mediaFile,
+          });
+
+          if (!directUploadRes.ok) {
+            setErrorMsg("Upload failed — the file may be too large or your connection was interrupted. Please try again.");
+            setStatus("error");
+            return;
+          }
+        } catch {
+          setErrorMsg("Upload failed — the file may be too large or your connection was interrupted. Please try again.");
+          setStatus("error");
+          return;
+        }
+
+        // Step 3: Use the public URL
+        mediaUrl = uploadUrlData.publicUrl;
+      }
+
+      // ── Direct-to-Supabase upload for profile picture ──
+      if (profilePic) {
+        try {
+          const pfpUrlRes = await fetch("/api/shoutouts/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: profilePic.name,
+              fileType: profilePic.type,
+              bucket: "profile-pictures",
+            }),
+          });
+
+          if (pfpUrlRes.ok) {
+            const pfpUrlData = await pfpUrlRes.json();
+
+            const pfpUploadRes = await fetch(pfpUrlData.signedUrl, {
+              method: "PUT",
+              headers: { "Content-Type": profilePic.type },
+              body: profilePic,
+            });
+
+            if (pfpUploadRes.ok) {
+              profilePictureUrl = pfpUrlData.publicUrl;
+            }
+          }
+        } catch {
+          // Profile picture upload failure is non-fatal — continue without it
+        }
+      }
+
+      // ── Submit the shoutout (body is now tiny — just strings) ──
       const formData = new FormData();
       formData.append("sender_name", senderName.trim());
       formData.append("message_type", messageType);
@@ -156,13 +230,12 @@ export default function ShoutoutPage() {
       if (messageType === "text") {
         formData.append("text_content", textContent);
       }
-      if (mediaFile) {
-        formData.append("media_file", mediaFile);
+      if (mediaUrl) {
+        formData.append("media_url", mediaUrl);
       }
-      if (profilePic) {
-        formData.append("profile_picture", profilePic);
+      if (profilePictureUrl) {
+        formData.append("profile_picture_url", profilePictureUrl);
       }
-
 
       const res = await fetch("/api/shoutouts", {
         method: "POST",
@@ -179,7 +252,7 @@ export default function ShoutoutPage() {
 
       setStatus("success");
     } catch {
-      setErrorMsg("Network error. Please check your connection and try again.");
+      setErrorMsg("Something went wrong. Please check your connection and try again.");
       setStatus("error");
     }
   }
@@ -526,7 +599,7 @@ export default function ShoutoutPage() {
                           margin: 0,
                         }}
                       >
-                        JPG, PNG, or WebP • Max 5MB
+                        JPG, PNG, or WebP
                       </p>
                     </>
                   )}
@@ -618,7 +691,7 @@ export default function ShoutoutPage() {
                             margin: 0,
                           }}
                         >
-                          MP4, MOV, or WebM • Max 50MB
+                          MP4, MOV, or WebM
                         </p>
                       </>
                     )}

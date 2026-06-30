@@ -3,13 +3,14 @@ import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import type { MessageType, Shoutout } from "@/types/shoutout.types";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 const PAGE_SIZE = 20;
 
 // Allowed MIME types for uploads
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
 /** Strip HTML tags from user-submitted text to prevent XSS */
 function sanitize(text: string): string {
@@ -190,107 +191,104 @@ export async function POST(request: NextRequest) {
     }
 
     if (messageType === "photo" || messageType === "video") {
-      const hasFile = mediaFile instanceof File && mediaFile.size > 0;
+      // ── Check for pre-uploaded media URL (direct-to-Supabase flow) ──
+      const rawMediaUrl = formData.get("media_url");
+      if (rawMediaUrl && typeof rawMediaUrl === "string" && rawMediaUrl.trim().length > 0) {
+        mediaUrl = rawMediaUrl.trim();
+      } else {
+        // ── Fallback: upload file through the serverless function ──
+        const hasFile = mediaFile instanceof File && mediaFile.size > 0;
 
-      if (!hasFile) {
-        return Response.json(
-          {
-            error:
-              messageType === "photo"
-                ? "A photo file is required."
-                : "A video file is required.",
-          },
-          { status: 400 }
-        );
+        if (!hasFile) {
+          return Response.json(
+            {
+              error:
+                messageType === "photo"
+                  ? "A photo file is required."
+                  : "A video file is required.",
+            },
+            { status: 400 }
+          );
+        }
+
+        if (hasFile && mediaFile instanceof File) {
+          // Validate MIME type
+          if (messageType === "photo" && !ALLOWED_IMAGE_TYPES.includes(mediaFile.type)) {
+            return Response.json(
+              { error: "Only JPG, PNG, and WebP images are allowed." },
+              { status: 400 }
+            );
+          }
+          if (messageType === "video" && !ALLOWED_VIDEO_TYPES.includes(mediaFile.type)) {
+            return Response.json(
+              { error: "Only MP4, MOV, and WebM videos are allowed." },
+              { status: 400 }
+            );
+          }
+
+          // Generate unique filename
+          const ext = mediaFile.name.split(".").pop() || "bin";
+          const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+          const supabaseAdmin = createSupabaseAdminClient();
+
+          const fileBuffer = Buffer.from(await mediaFile.arrayBuffer());
+
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("shoutouts-media")
+            .upload(fileName, fileBuffer, {
+              contentType: mediaFile.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            return Response.json(
+              { error: "Failed to upload file. Please try again." },
+              { status: 500 }
+            );
+          }
+
+          // Get public URL
+          const { data: urlData } = supabaseAdmin.storage
+            .from("shoutouts-media")
+            .getPublicUrl(fileName);
+
+          mediaUrl = urlData.publicUrl;
+        }
       }
-
-      // ── Upload file to Supabase Storage ──
-      if (hasFile && mediaFile instanceof File) {
-        // Validate MIME type
-        if (messageType === "photo" && !ALLOWED_IMAGE_TYPES.includes(mediaFile.type)) {
-          return Response.json(
-            { error: "Only JPG, PNG, and WebP images are allowed." },
-            { status: 400 }
-          );
-        }
-        if (messageType === "video" && !ALLOWED_VIDEO_TYPES.includes(mediaFile.type)) {
-          return Response.json(
-            { error: "Only MP4, MOV, and WebM videos are allowed." },
-            { status: 400 }
-          );
-        }
-
-        // Validate file size
-        if (messageType === "photo" && mediaFile.size > MAX_IMAGE_SIZE) {
-          return Response.json(
-            { error: "Photo must be under 5MB." },
-            { status: 400 }
-          );
-        }
-        if (messageType === "video" && mediaFile.size > MAX_VIDEO_SIZE) {
-          return Response.json(
-            { error: "Video must be under 50MB." },
-            { status: 400 }
-          );
-        }
-
-        // Generate unique filename
-        const ext = mediaFile.name.split(".").pop() || "bin";
-        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-        const supabaseAdmin = createSupabaseAdminClient();
-
-        const fileBuffer = Buffer.from(await mediaFile.arrayBuffer());
-
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from("shoutouts-media")
-          .upload(fileName, fileBuffer, {
-            contentType: mediaFile.type,
-            upsert: false,
-          });
-
-        if (uploadError) {
-          return Response.json(
-            { error: "Failed to upload file. Please try again." },
-            { status: 500 }
-          );
-        }
-
-        // Get public URL
-        const { data: urlData } = supabaseAdmin.storage
-          .from("shoutouts-media")
-          .getPublicUrl(fileName);
-
-        mediaUrl = urlData.publicUrl;
-      }
-
-
     }
 
     // ── Insert shoutout record ──
     const supabaseAdmin = createSupabaseAdminClient();
 
-    // Handle optional profile picture upload
-    const profilePicFile = formData.get("profile_picture");
+    // Handle optional profile picture — check for pre-uploaded URL first
+    const rawProfileUrl = formData.get("profile_picture_url");
     let profilePictureUrl: string | null = null;
 
-    if (profilePicFile instanceof File && profilePicFile.size > 0) {
-      const ext = profilePicFile.name.split(".").pop() || "jpg";
-      const pfpFileName = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
-      const pfpBuffer = Buffer.from(await profilePicFile.arrayBuffer());
+    if (rawProfileUrl && typeof rawProfileUrl === "string" && rawProfileUrl.trim().length > 0) {
+      profilePictureUrl = rawProfileUrl.trim();
+    } else {
+      // Fallback: upload profile picture through the serverless function
+      const profilePicFile = formData.get("profile_picture");
 
-      const { error: pfpError } = await supabaseAdmin.storage
-        .from("profile-pictures")
-        .upload(pfpFileName, pfpBuffer, {
-          contentType: profilePicFile.type,
-          upsert: false,
-        });
+      if (profilePicFile instanceof File && profilePicFile.size > 0) {
+        const ext = profilePicFile.name.split(".").pop() || "jpg";
+        const pfpFileName = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+        const pfpBuffer = Buffer.from(await profilePicFile.arrayBuffer());
 
-      if (!pfpError) {
-        const { data: pfpUrl } = supabaseAdmin.storage
+        const { error: pfpError } = await supabaseAdmin.storage
           .from("profile-pictures")
-          .getPublicUrl(pfpFileName);
-        profilePictureUrl = pfpUrl.publicUrl;
+          .upload(pfpFileName, pfpBuffer, {
+            contentType: profilePicFile.type,
+            upsert: false,
+          });
+
+        if (!pfpError) {
+          const { data: pfpUrl } = supabaseAdmin.storage
+            .from("profile-pictures")
+            .getPublicUrl(pfpFileName);
+          profilePictureUrl = pfpUrl.publicUrl;
+        }
       }
     }
 
