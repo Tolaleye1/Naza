@@ -12,10 +12,33 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
   { value: "video", label: "Video", icon: "🎥" },
 ];
 
-// Client-side size limits (must match API route)
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 500;
+
+/** Upload a file with progress tracking using XMLHttpRequest */
+function uploadWithProgress(
+  url: string,
+  file: File,
+  onProgress: (percent: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url, true);
+    xhr.setRequestHeader("Content-Type", file.type);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Upload failed with status ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    xhr.send(file);
+  });
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -31,6 +54,7 @@ export default function ShoutoutFormSection() {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,15 +77,10 @@ export default function ShoutoutFormSection() {
       return;
     }
 
-    // Client-side validation
+    // Client-side MIME type validation
     if (messageType === "photo") {
       if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
         setErrorMsg("Only JPG, PNG, and WebP images are allowed.");
-        setMediaFile(null);
-        return;
-      }
-      if (file.size > MAX_IMAGE_SIZE) {
-        setErrorMsg("Photo must be under 5MB.");
         setMediaFile(null);
         return;
       }
@@ -70,11 +89,6 @@ export default function ShoutoutFormSection() {
     if (messageType === "video") {
       if (!["video/mp4", "video/quicktime", "video/webm"].includes(file.type)) {
         setErrorMsg("Only MP4, MOV, and WebM videos are allowed.");
-        setMediaFile(null);
-        return;
-      }
-      if (file.size > MAX_VIDEO_SIZE) {
-        setErrorMsg("Video must be under 50MB.");
         setMediaFile(null);
         return;
       }
@@ -92,6 +106,7 @@ export default function ShoutoutFormSection() {
     setMessageType("text");
     setStatus("idle");
     setErrorMsg("");
+    setUploadProgress(0);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -121,6 +136,7 @@ export default function ShoutoutFormSection() {
     }
 
     setStatus("loading");
+    setUploadProgress(0);
 
     try {
       const formData = new FormData();
@@ -131,14 +147,50 @@ export default function ShoutoutFormSection() {
         formData.append("text_content", textContent);
       }
 
-      if (mediaFile) {
-        formData.append("media_file", mediaFile);
+      // Direct-to-Supabase upload for photo/video files
+      if (mediaFile && (messageType === "photo" || messageType === "video")) {
+        try {
+          // Step 1: Get a signed upload URL from our API
+          const urlRes = await fetch("/api/shoutouts/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: mediaFile.name,
+              fileType: mediaFile.type,
+              bucket: "shoutouts-media",
+            }),
+          });
+
+          if (!urlRes.ok) {
+            const urlData = await urlRes.json();
+            setErrorMsg(urlData.error || "Could not prepare upload. Please try again.");
+            setStatus("error");
+            return;
+          }
+
+          const { signedUrl, publicUrl } = await urlRes.json();
+
+          // Step 2: Upload directly to Supabase with progress tracking
+          await uploadWithProgress(signedUrl, mediaFile, (percent) => {
+            setUploadProgress(percent);
+          });
+
+          // Step 3: Send the public URL (not the file) to our API
+          formData.append("media_url", publicUrl);
+        } catch {
+          setErrorMsg(
+            "Upload failed — the file may be too large or your connection was interrupted. Please try again."
+          );
+          setStatus("error");
+          return;
+        }
       }
 
       if (messageType === "video" && youtubeUrl.trim()) {
         formData.append("youtube_url", youtubeUrl.trim());
       }
 
+      // Step 4: Submit the shoutout record
       const res = await fetch("/api/shoutouts", {
         method: "POST",
         body: formData,
@@ -147,14 +199,16 @@ export default function ShoutoutFormSection() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error || "Something went wrong. Please try again.");
+        setErrorMsg(data.error || "Your media uploaded but the shoutout could not be saved. Please try again.");
         setStatus("error");
         return;
       }
 
       setStatus("success");
     } catch {
-      setErrorMsg("Network error. Please check your connection and try again.");
+      setErrorMsg(
+        "Upload failed — the file may be too large or your connection was interrupted. Please try again."
+      );
       setStatus("error");
     }
   }
@@ -324,7 +378,7 @@ export default function ShoutoutFormSection() {
                       Click to upload photo
                     </p>
                     <p className="mt-0.5 font-body text-stamp text-cream-muted">
-                      JPG, PNG, or WebP • Max 5MB
+                      JPG, PNG, or WebP
                     </p>
                   </>
                 )}
@@ -367,7 +421,7 @@ export default function ShoutoutFormSection() {
                         Click to upload video
                       </p>
                       <p className="mt-0.5 font-body text-stamp text-cream-muted">
-                        MP4, MOV, or WebM • Max 50MB
+                        MP4, MOV, or WebM
                       </p>
                     </>
                   )}
@@ -417,7 +471,9 @@ export default function ShoutoutFormSection() {
             {status === "loading" ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cream-text/30 border-t-cream-text" />
-                Sending…
+                {messageType !== "text" && uploadProgress > 0 && uploadProgress < 100
+                  ? `Uploading… ${uploadProgress}%`
+                  : "Sending…"}
               </span>
             ) : (
               "Send Your Love 💌"

@@ -23,7 +23,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Failed to fetch gallery" }, { status: 500 });
       }
 
-      return NextResponse.json(data || []);
+      return NextResponse.json(data || [], {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      });
     }
 
     if (context === "homepage") {
@@ -40,7 +44,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Failed to fetch gallery" }, { status: 500 });
       }
 
-      return NextResponse.json(data || []);
+      return NextResponse.json(data || [], {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      });
     }
 
     // Fetch unpinned items with pagination
@@ -94,6 +102,10 @@ export async function GET(request: Request) {
       pinned,
       unpinned,
       hasMore
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
     });
   } catch (err) {
     console.error("Gallery API unexpected error:", err);

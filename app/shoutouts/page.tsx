@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import GalaxyShoutoutsSection from "@/components/sections/galaxy-shoutouts-section";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import GalaxyShoutoutsLazy from "@/components/sections/galaxy-shoutouts-lazy";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export default async function ShoutoutsPage() {
 
   return (
     <main>
-      <GalaxyShoutoutsSection visible={visible} />
+      <GalaxyShoutoutsLazy visible={visible} />
     </main>
   );
 }

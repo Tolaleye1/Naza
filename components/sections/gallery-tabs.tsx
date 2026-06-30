@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import type { GalleryItem } from "@/types/gallery.types";
 
 interface GalleryTabsProps {
@@ -284,16 +285,12 @@ function PhotoGrid({
               "rgba(255,150,180,0.15)";
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={photo.url}
             alt={photo.caption ?? "Gallery photo"}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            style={{ objectFit: "cover" }}
             loading="lazy"
           />
         </div>
@@ -356,7 +353,7 @@ function VideoItem({ video }: { video: GalleryItem }) {
           src={video.url}
           controls={playing}
           playsInline
-          preload="metadata"
+          preload="none"
           style={{
             width: "100%",
             height: "100%",

@@ -194,6 +194,7 @@ async function initThree(
   let frameId = 0;
   const animate = () => {
     frameId = requestAnimationFrame(animate);
+    if (document.hidden) return; // skip rendering when tab is not visible
     galaxy.rotation.y += 0.0003;
     nodeGroup.rotation.y += 0.0003;
     controls.update();

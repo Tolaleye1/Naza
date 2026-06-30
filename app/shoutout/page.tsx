@@ -279,15 +279,6 @@ export default function ShoutoutPage() {
               >
                 Your shoutout has been sent!
               </h3>
-              <p
-                style={{
-                  fontFamily: "var(--ff-body)",
-                  fontSize: "0.95rem",
-                  color: "var(--text-muted)",
-                }}
-              >
-                It&apos;ll appear on the wall once it&apos;s approved. 💕
-              </p>
               <button
                 onClick={resetForm}
                 style={{

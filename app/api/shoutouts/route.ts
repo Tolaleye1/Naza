@@ -133,7 +133,14 @@ export async function GET(request: NextRequest) {
       hasMore = false;
     }
 
-    return Response.json({ shoutouts, total, hasMore });
+    return Response.json(
+      { shoutouts, total, hasMore },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (e) {
     console.error("shoutouts route error:", e);
     return Response.json(

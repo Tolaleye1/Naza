@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface HomepagePhoto {
@@ -38,11 +39,13 @@ export default function HomepageGalleryGrid({ photos }: { photos: HomepagePhoto[
               }}
             >
               {photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   className="gallery-img"
                   src={photo.url}
                   alt={photo.caption || `Memory ${slotNum}`}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  style={{ objectFit: "cover" }}
                 />
               ) : (
                 <div className="gallery-placeholder">
