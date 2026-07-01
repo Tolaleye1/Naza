@@ -31,6 +31,8 @@ export default function ShoutoutPage() {
   const [profilePreview, setProfilePreview] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
@@ -110,8 +112,38 @@ export default function ShoutoutPage() {
     setMessageType("text");
     setStatus("idle");
     setErrorMsg("");
+    setUploadProgress(0);
+    setUploadStage("");
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (profileInputRef.current) profileInputRef.current.value = "";
+  }
+
+  /** Upload a file via XMLHttpRequest so we can track progress */
+  function uploadWithProgress(
+    url: string,
+    file: File,
+    onProgress: (percent: number) => void
+  ): Promise<{ ok: boolean; status: number }> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      xhr.setRequestHeader("Content-Type", file.type);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status });
+      };
+
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.onabort = () => reject(new Error("Upload aborted"));
+
+      xhr.send(file);
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -136,6 +168,8 @@ export default function ShoutoutPage() {
     }
 
     setStatus("loading");
+    setUploadProgress(0);
+    setUploadStage("");
 
     try {
       let mediaUrl: string | null = null;
@@ -144,6 +178,8 @@ export default function ShoutoutPage() {
       // ── Direct-to-Supabase upload for media files ──
       if (mediaFile && (messageType === "photo" || messageType === "video")) {
         // Step 1: Get a signed upload URL
+        setUploadStage("Preparing...");
+        setUploadProgress(0);
         let uploadUrlRes: Response;
         try {
           uploadUrlRes = await fetch("/api/shoutouts/upload-url", {
@@ -168,15 +204,16 @@ export default function ShoutoutPage() {
           return;
         }
 
-        // Step 2: Upload directly to Supabase Storage (bypasses serverless function)
+        // Step 2: Upload directly to Supabase Storage with progress tracking
+        setUploadStage(messageType === "video" ? "Uploading video..." : "Uploading photo...");
         try {
-          const directUploadRes = await fetch(uploadUrlData.signedUrl, {
-            method: "PUT",
-            headers: { "Content-Type": mediaFile.type },
-            body: mediaFile,
-          });
+          const result = await uploadWithProgress(
+            uploadUrlData.signedUrl,
+            mediaFile,
+            (percent) => setUploadProgress(percent)
+          );
 
-          if (!directUploadRes.ok) {
+          if (!result.ok) {
             setErrorMsg("Upload failed — the file may be too large or your connection was interrupted. Please try again.");
             setStatus("error");
             return;
@@ -187,6 +224,7 @@ export default function ShoutoutPage() {
           return;
         }
 
+        setUploadProgress(100);
         // Step 3: Use the public URL
         mediaUrl = uploadUrlData.publicUrl;
       }
@@ -223,6 +261,7 @@ export default function ShoutoutPage() {
       }
 
       // ── Submit the shoutout (body is now tiny — just strings) ──
+      setUploadStage("Saving...");
       const formData = new FormData();
       formData.append("sender_name", senderName.trim());
       formData.append("message_type", messageType);
@@ -745,12 +784,57 @@ export default function ShoutoutPage() {
                       borderTopColor: "#0e0208",
                     }}
                   />
-                  Sending…
+                  {uploadStage || "Sending…"}
                 </span>
               ) : (
                 "Send Your Love 💌"
               )}
             </button>
+
+            {/* Upload Progress Bar */}
+            {status === "loading" && (messageType === "photo" || messageType === "video") && mediaFile && (
+              <div
+                style={{
+                  width: "100%",
+                  marginTop: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: "6px",
+                    borderRadius: "999px",
+                    background: "rgba(255,255,255,0.08)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${uploadProgress}%`,
+                      borderRadius: "999px",
+                      background: "linear-gradient(90deg, var(--rose), var(--rose-light))",
+                      transition: "width 0.3s ease",
+                    }}
+                  />
+                </div>
+                <p
+                  style={{
+                    fontFamily: "var(--ff-body)",
+                    fontSize: "0.75rem",
+                    color: "var(--text-muted)",
+                    textAlign: "center",
+                    margin: 0,
+                    opacity: 0.7,
+                  }}
+                >
+                  {uploadProgress}%{uploadStage ? ` — ${uploadStage}` : ""}
+                </p>
+              </div>
+            )}
           </form>
         </div>
       </section>
