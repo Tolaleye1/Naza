@@ -118,32 +118,44 @@ export default function ShoutoutPage() {
     if (profileInputRef.current) profileInputRef.current.value = "";
   }
 
-  /** Upload a file via XMLHttpRequest so we can track progress */
-  function uploadWithProgress(
+  /**
+   * Upload a file via fetch() with estimated progress simulation.
+   * fetch() is required because Supabase signed URLs don't support
+   * XMLHttpRequest with upload progress listeners (CORS issues).
+   */
+  async function uploadWithEstimatedProgress(
     url: string,
     file: File,
     onProgress: (percent: number) => void
-  ): Promise<{ ok: boolean; status: number }> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", url);
-      xhr.setRequestHeader("Content-Type", file.type);
+  ): Promise<{ ok: boolean }> {
+    // Estimate upload time: assume ~1.5 MB/s, minimum 2s, max 120s
+    const estimatedSeconds = Math.min(120, Math.max(2, file.size / (1.5 * 1024 * 1024)));
+    const intervalMs = 200;
+    const totalSteps = (estimatedSeconds * 1000) / intervalMs;
+    const maxSimulated = 90; // simulate up to 90%, jump to 100% on completion
+    let currentStep = 0;
 
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          onProgress(Math.round((e.loaded / e.total) * 100));
-        }
-      };
+    const interval = setInterval(() => {
+      currentStep++;
+      // Ease-out curve: fast at start, slows toward 90%
+      const progress = maxSimulated * (1 - Math.pow(1 - currentStep / totalSteps, 2));
+      onProgress(Math.min(Math.round(progress), maxSimulated));
+      if (currentStep >= totalSteps) clearInterval(interval);
+    }, intervalMs);
 
-      xhr.onload = () => {
-        resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status });
-      };
-
-      xhr.onerror = () => reject(new Error("Upload failed"));
-      xhr.onabort = () => reject(new Error("Upload aborted"));
-
-      xhr.send(file);
-    });
+    try {
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      clearInterval(interval);
+      onProgress(100);
+      return { ok: res.ok };
+    } catch (err) {
+      clearInterval(interval);
+      throw err;
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -207,7 +219,7 @@ export default function ShoutoutPage() {
         // Step 2: Upload directly to Supabase Storage with progress tracking
         setUploadStage(messageType === "video" ? "Uploading video..." : "Uploading photo...");
         try {
-          const result = await uploadWithProgress(
+          const result = await uploadWithEstimatedProgress(
             uploadUrlData.signedUrl,
             mediaFile,
             (percent) => setUploadProgress(percent)
