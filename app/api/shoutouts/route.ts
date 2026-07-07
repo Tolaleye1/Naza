@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      textContent = sanitize(rawText).slice(0, 500);
+      textContent = sanitize(rawText).slice(0, 2000);
     }
 
     if (messageType === "photo" || messageType === "video") {

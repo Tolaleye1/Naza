@@ -12,8 +12,8 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
   { value: "video", label: "Video", icon: "🎥" },
 ];
 
-const MAX_PROFILE_SIZE = 5 * 1024 * 1024;
-const MAX_TEXT_LENGTH = 500;
+
+const MAX_TEXT_LENGTH = 2000;
 const ALLOWED_PROFILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function formatFileSize(bytes: number): string {
@@ -61,12 +61,6 @@ export default function ShoutoutPage() {
       return;
     }
 
-    if (file.size > MAX_PROFILE_SIZE) {
-      setErrorMsg("Profile picture must be under 5MB.");
-      setProfilePic(null);
-      setProfilePreview(undefined);
-      return;
-    }
 
     setErrorMsg("");
     setProfilePic(file);

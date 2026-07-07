@@ -12,7 +12,7 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
   { value: "video", label: "Video", icon: "🎥" },
 ];
 
-const MAX_TEXT_LENGTH = 500;
+const MAX_TEXT_LENGTH = 2000;
 
 /** Upload a file with progress tracking using XMLHttpRequest */
 function uploadWithProgress(
