@@ -12,7 +12,6 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
   { value: "video", label: "Video", icon: "🎥" },
 ];
 
-const MAX_TEXT_LENGTH = 2000;
 
 /** Upload a file with progress tracking using XMLHttpRequest */
 function uploadWithProgress(
@@ -58,7 +57,6 @@ export default function ShoutoutFormSection() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const charsRemaining = MAX_TEXT_LENGTH - textContent.length;
 
   function handleTypeChange(type: MessageType) {
     setMessageType(type);
@@ -333,21 +331,12 @@ export default function ShoutoutFormSection() {
               <textarea
                 id="text-content"
                 value={textContent}
-                onChange={(e) =>
-                  setTextContent(e.target.value.slice(0, MAX_TEXT_LENGTH))
-                }
-                maxLength={MAX_TEXT_LENGTH}
+                onChange={(e) => setTextContent(e.target.value)}
                 rows={5}
                 placeholder="Say something beautiful…"
                 className="mt-2 w-full resize-none border-b-2 border-crimson/20 bg-transparent px-0 py-2 font-body text-base text-ink outline-none transition-colors placeholder:text-cream-muted focus:border-crimson"
               />
-              <p
-                className={`mt-1 text-right font-body text-stamp ${
-                  charsRemaining < 50 ? "text-error" : "text-cream-muted"
-                }`}
-              >
-                {charsRemaining} characters remaining
-              </p>
+
             </div>
           )}
 

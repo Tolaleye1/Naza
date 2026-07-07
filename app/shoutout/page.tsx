@@ -13,7 +13,6 @@ const TYPE_OPTIONS: { value: MessageType; label: string; icon: string }[] = [
 ];
 
 
-const MAX_TEXT_LENGTH = 2000;
 const ALLOWED_PROFILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function formatFileSize(bytes: number): string {
@@ -37,7 +36,7 @@ export default function ShoutoutPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
 
-  const charsRemaining = MAX_TEXT_LENGTH - textContent.length;
+
   function handleTypeChange(type: MessageType) {
     setMessageType(type);
     setTextContent("");
@@ -526,10 +525,7 @@ export default function ShoutoutPage() {
                 <textarea
                   id="text-content"
                   value={textContent}
-                  onChange={(e) =>
-                    setTextContent(e.target.value.slice(0, MAX_TEXT_LENGTH))
-                  }
-                  maxLength={MAX_TEXT_LENGTH}
+                  onChange={(e) => setTextContent(e.target.value)}
                   rows={5}
                   placeholder="Say something beautiful..."
                   style={{
@@ -545,17 +541,7 @@ export default function ShoutoutPage() {
                     transition: "border-color 0.3s",
                   }}
                 />
-                <p
-                  style={{
-                    textAlign: "right",
-                    fontFamily: "var(--ff-body)",
-                    fontSize: "0.75rem",
-                    color: charsRemaining < 50 ? "var(--color-error)" : "var(--text-muted)",
-                    opacity: 0.6,
-                  }}
-                >
-                  {charsRemaining} characters remaining
-                </p>
+
               </div>
             )}
 
