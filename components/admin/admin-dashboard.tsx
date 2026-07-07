@@ -144,10 +144,6 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert("File must be under 50MB.");
-      return;
-    }
 
     setGalleryUploading(true);
 
